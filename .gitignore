@@ -1,0 +1,29 @@
+# Unreal Engine project files (this folder doubles as an Unreal project)
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+Content/
+Config/
+Source/
+*.uproject
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+
+# tooling / local config
+.claude/
+.mcp.json
+
+# stray art exports at the repo root
+/_*.png
+/Screenshot*.png
+
+# OS noise
+Thumbs.db
+desktop.ini
+.DS_Store
