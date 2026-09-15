@@ -146,7 +146,7 @@ let MW=640,MH=64;const TRAIN_LV=40;let realm='main';
 let map=[];function resetMap(w,h,ch){MW=w;MH=h;map=[];for(let y=0;y<MH;y++)map.push(new Array(MW).fill(ch));}resetMap(640,64,'#');
 const tileAt=(tx,ty)=>(tx<0||ty<0||tx>=MW||ty>=MH)?'#':map[ty][tx];
 function carve(x,y,w,h,ch='.'){for(let j=y;j<y+h;j++)for(let i=x;i<x+w;i++)if(j>=0&&j<MH&&i>=0&&i<MW)map[j][i]=ch;}
-const spawns=[];const S=(t,x,y)=>{if(!spawns.some(q=>q.t===t&&q.x===x&&q.y===y))spawns.push({t,x,y});};const RESPAWN_T=150;const respawnAt={};const ISLES=[];const BOSS_X=[360,460,560];
+const SHAFTS=[341,420,500];const spawns=[];const S=(t,x,y)=>{if(!spawns.some(q=>q.t===t&&q.x===x&&q.y===y))spawns.push({t,x,y});};const RESPAWN_T=150;const respawnAt={};const ISLES=[];const BOSS_X=[360,460,560];
 const spawnsSky=[];const SS=(t,x,y,o)=>spawnsSky.push({t,x,y,o});const spawnsDeep=[];const SD=(t,x,y,o)=>spawnsDeep.push({t,x,y,o});const spawnsIns=[];const activeSpawns=()=>realm==='sky'?spawnsSky:realm==='deep'?spawnsDeep:realm==='inside'?spawnsIns:spawns;const realmPrefix=()=>realm==='sky'?'sky:':realm==='deep'?'deep:':realm==='inside'?'ins:':'';
 const SKY={W:176,H:470,tiers:[],islands:0};const skyReached=new Set();const PERCH={x0:629*TS,x1:636*TS,y:9*TS};
 const GOLEM_SKY={hp:3000,maxHp:3000,label:'SKY GOLEM',xp:1200,stone:undefined,dmgSwing:10,dmgContact:5,rollDmg:11};
@@ -445,12 +445,15 @@ function buildLevel(){
      prev={x0,y,w};}
    carve(609,11,3,1,'-');carve(614,8,24,3,'#');}                  // the giant's perch
   // the long road east: ridges every so often, open floors around the lairs
-  for(let x=300;x<632;x+=13){if(BOSS_X.some(b=>Math.abs(x-b)<10)||FT.some(f=>f.y===37&&Math.abs(f.x-(x+1))<4)||HAMLETS.some(h=>x*TS>=h.x0-3*TS&&x*TS<=h.x1))continue;carve(x,36,3,2,'#');carve(x+6,33,4,1,'#');}
+  for(let x=300;x<632;x+=13){if(BOSS_X.some(b=>Math.abs(x-b)<10)||FT.some(f=>f.y===37&&Math.abs(f.x-(x+1))<4)||HAMLETS.some(h=>x*TS>=h.x0-3*TS&&x*TS<=h.x1))continue;
+    if(SHAFTS.some(h=>x<h+3&&x+3>h-1))continue;                 // never roof a shaft
+    carve(x,36,3,2,'#');if(!SHAFTS.some(h=>x+6<h+3&&x+10>h-1))carve(x+6,33,4,1,'#');}
   // side caves: a shaft from the surface drops into a pocket; wall-jump the shaft to get back out
   carve(158,38,2,6);carve(150,44,22,6);carve(154,47,3,1,'#');carve(165,46,3,1,'#');
   carve(191,38,2,6);carve(180,44,24,6);carve(184,47,3,1,'#');carve(197,46,3,1,'#');
   carve(233,38,2,6);carve(222,44,22,7);carve(226,48,3,1,'#');carve(238,47,3,1,'#');
   carve(25,12,2,3);carve(16,15,16,5);carve(19,17,3,1,'#');
+  for(const h of SHAFTS)carve(h,34,2,4);                       // clear the mouth of anything the road laid over it
   carve(341,38,2,6);carve(330,44,24,6);carve(334,47,3,1,'#');carve(348,46,3,1,'#');
   carve(420,38,2,6);carve(410,44,24,6);carve(414,47,3,1,'#');carve(427,46,3,1,'#');
   carve(500,38,2,6);carve(490,44,24,6);carve(494,47,3,1,'#');carve(507,46,3,1,'#');
@@ -1273,11 +1276,7 @@ function drawCastle(bx,gy){
 const INSIDE={kind:null,seed:0,name:'',ret:{x:0,y:0},door:{x:0,y:0},folk:[]};
 const DOORS=[];
 function buildDoors(){DOORS.length=0;const gy=OUT2.y1;
-  for(const v of [VILLAGE,...HAMLETS]){
-    DOORS.push({x:v.x0+206,y:gy,kind:'house',seed:Math.round(v.x0/TS),name:v.name||'Cairnhold'});
-    DOORS.push({x:v.x0+458,y:gy,kind:'house',seed:Math.round(v.x0/TS)+13,name:v.name||'Cairnhold'});
-    if(v===VILLAGE)DOORS.push({x:v.x0+745,y:gy,kind:'castle',seed:0,name:'the keep'});
-  }}
+  DOORS.push({x:VILLAGE.x0+745,y:gy,kind:'castle',seed:0,name:'the keep'});}   // only the keep opens
 function doorNear(){if(realm!=='main')return null;const px=player.x+player.w/2,py=player.y+player.h;
   for(const d of DOORS)if(Math.abs(px-d.x)<40&&Math.abs(py-d.y)<72)return d;return null;}
 const exitNear=()=>realm==='inside'&&Math.abs(player.x+player.w/2-(INSIDE.door.x+player.w/2))<44;
