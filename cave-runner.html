@@ -1208,7 +1208,7 @@ const ESPR={},corpses=[];const flashCanvas=document.createElement('canvas');
 function loadEnemySheet(t,file,cols,rows,anims,cfg){const im=new Image();im.onload=()=>{ESPR[t]=Object.assign({img:im,fw:im.width/cols,fh:im.height/rows,anims},cfg);};im.src='sprites/'+file+ASSET_VER;}
 // scale = on-screen pixels per sheet pixel, foot = sheet pixels of padding under the feet, faceRight = which way the art is drawn
 loadEnemySheet('bug','bug.png',3,4,{idle:[0,3],walk:[1,3],hurt:[2,1],death:[3,3]},{scale:1,foot:2,faceRight:false,smooth:false});
-loadEnemySheet('bat','bat.png',6,1,{fly:[0,6]},{scale:2.1,foot:-2,faceRight:true,smooth:false});
+loadEnemySheet('bat','bat.png',4,1,{fly:[0,4]},{scale:0.8,foot:8,faceRight:true,smooth:false});
 loadEnemySheet('brute','brute.png',11,5,{idle:[0,4],attack:[1,7],roll:[2,7],death:[3,5],walk:[4,11]},{scale:1.55,foot:3,faceRight:true,smooth:true});
 // drop a dragon sheet in as sprites/dragon.png (same row layout as the golem) and it takes over; until then the dragon is a bigger red-tinted golem
 loadEnemySheet('dragon','dragon.png',4,5,{idle:[0,1],death:[1,3],attack:[2,2],walk:[3,4],breath:[4,1]},{scale:1,foot:2,faceRight:true,smooth:false});
