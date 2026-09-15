@@ -2076,10 +2076,6 @@ function drawMap(){
   ctx.fillStyle='#8d93a8';ctx.font='12px Georgia';ctx.fillText('the cave',(sx(0)+sx(140))/2,y0+44);ctx.fillText('the road',(sx(140)+sx(274))/2,y0+44);ctx.fillText('the lairs',(sx(276)+sx(430))/2,y0+44);ctx.fillText('the clouds',sx(330),y0-160);
   FTL().forEach((f,i)=>{const q=mapPointPos(f);const sel=i===mapSel;ctx.fillStyle=sel?'#ffe08a':(f.grind?'#d94a3a':'#e8eaf2');ctx.beginPath();ctx.arc(q.x,q.y,sel?9:6,0,7);ctx.fill();if(sel){ctx.strokeStyle='#ffe08a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(q.x,q.y,15,0,7);ctx.stroke();}
     ctx.fillStyle=sel?'#ffe08a':'#c8ccd8';ctx.font=(sel?'bold ':'')+(f.sky!==undefined?'10px':'13px')+' Georgia';if(f.sky!==undefined){ctx.textAlign='right';ctx.fillText(f.name,q.x-10,q.y+4);ctx.textAlign='center';}else ctx.fillText(f.name,q.x,q.y-16-(f.row!==undefined?f.row:(i%2))*13);});
-  if(gods.stolen&&gods.holeX&&!collectedStones.has('stolenblade')){const q=mapPointPos({x:gods.holeX,y:38});
-    const pu=0.6+0.4*Math.sin(time*4);ctx.fillStyle='rgba(255,120,90,'+pu+')';
-    ctx.fillRect(q.x-7,q.y-7,14,3);ctx.fillRect(q.x-7,q.y+4,14,3);ctx.fillRect(q.x-7,q.y-7,3,14);ctx.fillRect(q.x+4,q.y-7,3,14);
-    ctx.fillStyle='#ff785a';ctx.font='bold 11px Georgia';ctx.textAlign='center';ctx.fillText("THE GIANT'S HOLE",q.x,q.y-14);}
   {const me=realm==='sky'?{x:620,y:7}:{x:player.x/TS,y:(player.y+player.h)/TS-1};const q=mapPointPos(me);const pu=1+0.15*Math.sin(time*5);
     ctx.fillStyle='rgba(255,255,255,'+(0.25+0.15*Math.sin(time*5))+')';ctx.beginPath();ctx.arc(q.x,q.y,14*pu,0,7);ctx.fill();
     ctx.save();ctx.translate(q.x,q.y);ctx.rotate(Math.PI/4);ctx.fillStyle='#ffffff';ctx.fillRect(-6,-6,12,12);ctx.strokeStyle='#1d2030';ctx.lineWidth=2;ctx.strokeRect(-6,-6,12,12);ctx.restore();
