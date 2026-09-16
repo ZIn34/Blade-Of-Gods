@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Blade of Kings</title>
 <style>
-  html,body{margin:0;height:100%;background:#05060a;overflow:hidden;font-family:Georgia,'Times New Roman',serif}
+  html,body{margin:0;height:100%;background:#05060a;overflow:hidden;font-family:Georgia,'Times New Roman',serif;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none}
   #wrap{display:flex;align-items:center;justify-content:center;height:100%}
   canvas{display:block;background:#05060a;box-shadow:0 0 80px rgba(0,0,0,.8);cursor:none}
 </style>
@@ -32,7 +32,7 @@ function hash(x,y){let h=(x*374761393+y*668265263)|0;h=Math.imul(h^(h>>>13),1274
 
 /* ---------- input ---------- */
 const keys={},pressed={};let anyPressed=false;
-const BIND={left:['ArrowLeft','KeyA','PadLeft','StickLeft'],right:['ArrowRight','KeyD','PadRight','StickRight'],up:['ArrowUp','KeyW','PadUp','StickUp'],down:['ArrowDown','KeyS','PadDown','StickDown'],jump:['Space','KeyZ','PadA'],attack:['KeyX','KeyJ','Mouse0','PadRT'],dash:['KeyC','KeyL','PadX','PadRB'],dodge:['ShiftLeft','ShiftRight','Mouse2','PadB'],throw:['KeyF','KeyR','PadLB'],vanish:['KeyV','KeyG','PadLT'],rage:['KeyQ','KeyK','Mouse1','PadY'],confirm:['Enter','Space','KeyZ','PadA'],pause:['Escape','PadStart'],map:['Tab','PadBack'],pick1:['Digit1'],pick2:['Digit2'],pick3:['Digit3'],interact:['KeyE','ArrowUp','KeyW','PadUp','StickUp']};
+const BIND={left:['ArrowLeft','KeyA','PadLeft','StickLeft'],right:['ArrowRight','KeyD','PadRight','StickRight'],up:['ArrowUp','KeyW','PadUp','StickUp'],down:['ArrowDown','KeyS','PadDown','StickDown'],jump:['Space','KeyZ','PadA'],attack:['KeyX','KeyJ','Mouse0','PadRT'],dash:['KeyC','KeyL','PadX','PadRB'],dodge:['ShiftLeft','ShiftRight','Mouse2','PadB'],throw:['KeyF','KeyR','PadLB'],vanish:['KeyV','KeyG','PadLT'],rage:['KeyQ','KeyK','Mouse1','PadY'],confirm:['Enter','Space','KeyZ','PadA'],pause:['Escape','KeyP','PadStart'],map:['Tab','PadBack'],pick1:['Digit1'],pick2:['Digit2'],pick3:['Digit3'],interact:['KeyE','ArrowUp','KeyW','PadUp','StickUp']};
 addEventListener('keydown',e=>{if(e.code.startsWith('Arrow')||e.code==='Space'||e.code==='Tab')e.preventDefault();initAudio();startMusic();if(state==='name'){nameKey(e);}if(bindWait){e.preventDefault();captureBind(e.code);return;}if(e.repeat)return;keys[e.code]=true;pressed[e.code]=true;anyPressed=true;if(e.code==='KeyM'&&state!=='name')toggleMusic();});
 addEventListener('keyup',e=>{keys[e.code]=false;});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
@@ -2029,7 +2029,7 @@ function drawHUD(){
     ctx.fillText('Dash X/RB  -  Dagger LB  -  Vanish LT  -  Rage Y  -  Talk d-pad up'+(npc.mapGiven?'  -  Map Back':'')+'  -  Start pauses',W/2,H-10);
   } else {
     ctx.font='11px Georgia';ctx.fillText('Time a swing into a blow to PARRY  -  Move arrows/WASD  -  Jump Z/Space  -  Attack click/X aimed at mouse (up = uppercut, down in air = slam)  -  Dodge RMB/Shift',W/2,H-24);
-    ctx.fillText('Charge C  -  Dagger F  -  Vanish V  -  Rage Q  -  Talk E'+(npc.mapGiven?'  -  Map Tab':'')+'  -  Esc pause',W/2,H-10);
+    ctx.fillText('Charge C  -  Dagger F  -  Vanish V  -  Rage Q  -  Talk E'+(npc.mapGiven?'  -  Map Tab':'')+'  -  Esc / P pause',W/2,H-10);
   }
   const qt=questProgressText();if(qt){const q=questCurrent();ctx.fillStyle='rgba(8,9,14,0.6)';ctx.beginPath();ctx.roundRect(W-262,14,246,54,8);ctx.fill();ctx.textAlign='right';ctx.fillStyle='#ffe08a';ctx.font='bold 14px Georgia';ctx.fillText(npc.moving?'TO THE VILLAGE':(q?q.title.toUpperCase():'THE VILLAGE'),W-28,36);ctx.fillStyle=(questComplete()||!q)?'#9df29d':'#d8dbe6';ctx.font='14px Georgia';ctx.fillText(qt,W-28,56);const sj=sideJobText();if(sj){ctx.fillStyle='rgba(8,9,14,0.6)';ctx.beginPath();ctx.roundRect(W-262,72,246,26,8);ctx.fill();ctx.textAlign='right';ctx.fillStyle='#c8b06a';ctx.font='12px Georgia';ctx.fillText(sj,W-28,90);}}
   if(collectedStones.size>0||quest.i>=2){ctx.fillStyle='rgba(8,9,14,0.6)';ctx.beginPath();ctx.roundRect(W-262,74,246,34,8);ctx.fill();['storm','ice','fire','earth'].forEach((el,i)=>{ctx.globalAlpha=collectedStones.has(el)?1:0.25;drawStoneGem(W-220+i*54,91,el,14);});ctx.globalAlpha=1;}
