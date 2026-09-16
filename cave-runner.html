@@ -1777,6 +1777,7 @@ function heroPose(){
   if(p.throwT>0)return 'throw';
   if(p.slam)return 'slam';
   if(p.atkT>0){if(p.atkKind==='upper')return 'upper';if(p.atkKind==='punch2')return 'haymaker';return 'punch';}
+  if(p.invisT>0&&!p.onGround)return Math.abs(p.vx)>20?'run':'idle';   // drifting as a ghost, not tumbling through a jump arc
   const sliding=!p.onGround&&p.onWall!==0&&p.vy>0;
   if(sliding)return 'slide';
   if(!p.onGround)return 'jump';
