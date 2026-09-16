@@ -2221,7 +2221,7 @@ function titleKnight(px,py){
   ctx.fillStyle='rgba(255,224,138,0.9)';pxRect(px-4,py-54,3,3);pxRect(px+1,py-54,3,3);                       // eyes
   ctx.fillStyle=R;pxRect(px-9,py-46,3,27);pxRect(px-11,py-58,3,12);        // rim light down the left edge
 }
-function drawTitleScene(){
+function drawTitlePainted(){
   const t=time;
   const g=ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,'#05060f');g.addColorStop(0.30,'#141232');g.addColorStop(0.55,'#33204e');g.addColorStop(0.73,'#6e3a58');g.addColorStop(0.86,'#b96747');g.addColorStop(0.95,'#e19a55');g.addColorStop(1,'#f6c274');
@@ -2253,6 +2253,24 @@ function drawTitleScene(){
     ctx.fillStyle='rgba(255,'+(150+hash(i,22)*70|0)+',80,'+(0.55*(1-k))+')';pxRect(x,y,PX,PX);}
   const v=ctx.createRadialGradient(W/2,H*0.46,H*0.42,W/2,H*0.46,H*1.02);
   v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.52)');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+}
+/* the home page is the game itself: the camera parks outside the keep and the world runs */
+function drawTitleScene(){
+  if(realm!=='main'||!map[38]){drawTitlePainted();return;}
+  const cx=cam.x,cy=cam.y,px=player.x,py=player.y,pf=player.face;
+  cam.x=clamp(VILLAGE.x0+250,0,MW*TS-W);cam.y=clamp(38*TS-330,0,MH*TS-H);
+  drawBackgroundLow();drawMotes();
+  drawOutside();drawTiles();drawSideFolk();drawNpc();
+  player.x=VILLAGE.x0+392;player.y=38*TS-player.h;player.face=1;
+  drawPlayer();
+  player.x=px;player.y=py;player.face=pf;
+  drawParts();
+  cam.x=cx;cam.y=cy;
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'rgba(10,12,26,0.55)');g.addColorStop(0.45,'rgba(10,12,26,0.12)');g.addColorStop(1,'rgba(6,7,16,0.45)');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const v=ctx.createRadialGradient(W/2,H*0.45,H*0.34,W/2,H*0.45,H*0.95);
+  v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.55)');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
 }
 function drawMenu(){
   ctx.fillStyle=state==='pause'?'rgba(3,4,10,0.6)':'rgba(3,4,10,0.18)';ctx.fillRect(0,0,W,H);
