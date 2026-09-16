@@ -817,8 +817,8 @@ let deathInLair=false,deathInHole=false;
 function tooStrongTalk(){const p=player;npc.mapGiven=true;p.x=VILLAGE.npcX-70;p.y=38*TS-p.h;p.vx=0;p.vy=0;snapCam();npc.face=(p.x>npc.x)?1:-1;openDialog(['You are alive. Barely. I dragged you back here myself.','They are too strong for you as you are now. That is not shame, Sir Thraine, it is arithmetic.','Take this map. I have marked places with plenty of monsters. Go, fight, level up. Come back stronger and then try again.','And Sir Thraine: some nests are too thick to cut through. Your father\'s trick, the vanishing, is for those. Slip past, find the rope, and let the mountain do the killing.','Press Tab to open the map. I would say level forty or so before you go back out there. The road east and the cloud isles pay best, and hurt most.'],()=>{popups.push({x:p.x+p.w/2,y:p.y-30,text:'MAP UNLOCKED - PRESS TAB',life:2.5,color:'#ffe08a',size:16});sfx('quest');saveGame();});}
 function loadLastSave(){
   if(deathInHole){try{localStorage.setItem('caverunner.pending','thief');}catch(e){}}else if(deathInLair&&npc.atVillage&&!npc.mapGiven){try{localStorage.setItem('caverunner.pending','toostrong');}catch(e){}}
-  if(hasSave()){try{sessionStorage.setItem('cr_boot','continue');}catch(e){}location.reload();}
-  else{respawnPlayer();state='play';}
+  if(slotInfo(saveSlot)){try{sessionStorage.setItem('cr_boot','continue');}catch(e){}location.reload();}
+  else{respawnPlayer();state='play';}   // nothing saved in this slot yet: start it over rather than loading another knight
 }
 function updateGameOver(){if(just('confirm')||pressed.Mouse0||just('interact'))loadLastSave();else if(just('pause'))location.reload();}
 function drawGameOver(){const k=clamp((player.deadT-2.6)/0.8,0,1);ctx.fillStyle='rgba(3,4,10,'+(0.35+0.45*k)+')';ctx.fillRect(0,0,W,H);ctx.globalAlpha=k;ctx.textAlign='center';
@@ -2384,7 +2384,8 @@ player.x=4*TS+6;player.y=38*TS-player.h;player.safe={x:player.x,y:player.y};resp
 snapCam();
 {let boot=null;try{boot=sessionStorage.getItem('cr_boot');sessionStorage.removeItem('cr_boot');}catch(e){}
  if(boot==='continue'&&loadGame()){state='play';fadeIn=0.6;try{const pend=localStorage.getItem('caverunner.pending');if(pend==='toostrong'){localStorage.removeItem('caverunner.pending');if(npc.atVillage&&!npc.mapGiven)tooStrongTalk();}else if(pend==='thief'){localStorage.removeItem('caverunner.pending');if(realm!=='main')enterRealm('main');thiefTalk();}}catch(e){}}
- else if(boot==='new'){try{saveName=(localStorage.getItem('caverunner.newname')||'Thraine').trim()||'Thraine';localStorage.removeItem('caverunner.newname');localStorage.removeItem(slotKey(saveSlot));}catch(e){}state='play';fadeIn=0.6;}
+ else if(boot==='new'){try{saveName=(localStorage.getItem('caverunner.newname')||'Thraine').trim()||'Thraine';localStorage.removeItem('caverunner.newname');localStorage.removeItem(slotKey(saveSlot));}catch(e){}state='play';fadeIn=0.6;saveGame(true);}
+ else if(boot==='continue'){state='play';fadeIn=0.6;saveGame(true);}   // the slot was empty: begin it rather than loading another
  else{state='menu';menuCam();}}
 requestAnimationFrame(frame);
 </script>
