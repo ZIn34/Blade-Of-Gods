@@ -143,12 +143,13 @@ applySettings();
 
 /* ---------- level ---------- */
 let MW=640,MH=64;const TRAIN_LV=40;let realm='main';
-let map=[];function resetMap(w,h,ch){MW=w;MH=h;map=[];for(let y=0;y<MH;y++)map.push(new Array(MW).fill(ch));}resetMap(640,64,'#');
+const EK=1.75;const EX=x=>x<300?x:Math.round(300+(x-300)*EK);const MAIN_W=EX(640);   // the road east of the plateau, stretched
+let map=[];function resetMap(w,h,ch){MW=w;MH=h;map=[];for(let y=0;y<MH;y++)map.push(new Array(MW).fill(ch));}resetMap(MAIN_W,64,'#');
 const tileAt=(tx,ty)=>(tx<0||ty<0||tx>=MW||ty>=MH)?'#':map[ty][tx];
 function carve(x,y,w,h,ch='.'){for(let j=y;j<y+h;j++)for(let i=x;i<x+w;i++)if(j>=0&&j<MH&&i>=0&&i<MW)map[j][i]=ch;}
-const SHAFTS=[341,420,500];const spawns=[];const S=(t,x,y)=>{if(!spawns.some(q=>q.t===t&&q.x===x&&q.y===y))spawns.push({t,x,y});};const RESPAWN_T=150;const respawnAt={};const ISLES=[];const BOSS_X=[360,460,560];
+const SHAFTS=[341,420,500].map(EX);const spawns=[];const S=(t,x,y)=>{if(!spawns.some(q=>q.t===t&&q.x===x&&q.y===y))spawns.push({t,x,y});};const RESPAWN_T=150;const respawnAt={};const ISLES=[];const BOSS_X=[360,460,560].map(EX);
 const spawnsSky=[];const SS=(t,x,y,o)=>spawnsSky.push({t,x,y,o});const spawnsDeep=[];const SD=(t,x,y,o)=>spawnsDeep.push({t,x,y,o});const spawnsIns=[];const activeSpawns=()=>realm==='sky'?spawnsSky:realm==='deep'?spawnsDeep:realm==='inside'?spawnsIns:spawns;const realmPrefix=()=>realm==='sky'?'sky:':realm==='deep'?'deep:':realm==='inside'?'ins:':'';
-const SKY={W:176,H:470,tiers:[],islands:0};const skyReached=new Set();const PERCH={x0:629*TS,x1:636*TS,y:9*TS};
+const SKY={W:176,H:470,tiers:[],islands:0};const skyReached=new Set();const PERCH={x0:EX(629)*TS,x1:EX(636)*TS,y:9*TS};
 const GOLEM_SKY={hp:3000,maxHp:3000,label:'SKY GOLEM',xp:1200,stone:undefined,dmgSwing:10,dmgContact:5,rollDmg:11};
 const DRAGON_SKY={hp:2500,maxHp:2500,label:'SKY DRAGON',xp:1000,dmgSwing:10,dmgContact:5,breathDmg:8,breathCd:1.5};
 const WARDEN_SKY={hp:4500,maxHp:4500,label:'SKY WARDEN',xp:2500,dmgSwing:12,dmgContact:6,breathDmg:10,armorMul:0.15};
@@ -395,11 +396,11 @@ function drawCore(e){const x=e.x+e.w/2-cam.x,y=e.y+e.h-cam.y;const pl=0.5+0.5*Ma
   ctx.fillStyle=e.flash>0?'#fff':'#a86ad8';ctx.beginPath();ctx.moveTo(x,y-58);ctx.lineTo(x+14,y-30);ctx.lineTo(x,y-12);ctx.lineTo(x-14,y-30);ctx.closePath();ctx.fill();
   ctx.fillStyle='rgba(230,200,255,'+(0.5+pl*0.4)+')';ctx.beginPath();ctx.moveTo(x,y-50);ctx.lineTo(x+6,y-32);ctx.lineTo(x,y-22);ctx.lineTo(x-6,y-32);ctx.closePath();ctx.fill();
   if(Math.random()<0.3)part(x+rnd(-14,14),y-30,rnd(-20,20),rnd(-60,-20),0.8,'#c9a6ff',2,-10);}
-function respawnDroppedStones(){if(deadSpawns.has('thief')&&!collectedStones.has('stolenblade')&&gods.holeX)spawnStone('stolenblade',(gods.holeX+7)*TS,58*TS-24);for(const [id,el,tx] of [['giant@626,7','storm',626],['icedragon@360,37','ice',360],['dragon@460,37','fire',460],['stonegolem@560,37','earth',560]])if(deadSpawns.has(id)&&!collectedStones.has(el))spawnStone(el,tx*TS+16,(id.startsWith('giant')?8:38)*TS-24);}
+function respawnDroppedStones(){if(deadSpawns.has('thief')&&!collectedStones.has('stolenblade')&&gods.holeX)spawnStone('stolenblade',(gods.holeX+7)*TS,58*TS-24);for(const [id,el,tx] of [['giant@'+EX(626)+',7','storm',EX(626)],['icedragon@'+EX(360)+',37','ice',EX(360)],['dragon@'+EX(460)+',37','fire',EX(460)],['stonegolem@'+EX(560)+',37','earth',EX(560)]])if(deadSpawns.has(id)&&!collectedStones.has(el))spawnStone(el,tx*TS+16,(id.startsWith('giant')?8:38)*TS-24);}
 function enterRealm(r,pos){realm=r;stones.length=0;
-  if(r==='sky')buildSky();else if(r==='deep')buildDeep();else if(r==='inside')buildInside(INSIDE.kind);else{ISLES.length=0;spawns.length=0;resetMap(640,64,'#');buildLevel();if(deadSpawns.has('dragon@268,37')){barrierOpen=false;openBarrier(true);}respawnDroppedStones();}
+  if(r==='sky')buildSky();else if(r==='deep')buildDeep();else if(r==='inside')buildInside(INSIDE.kind);else{ISLES.length=0;spawns.length=0;resetMap(MAIN_W,64,'#');buildLevel();if(deadSpawns.has('dragon@268,37')){barrierOpen=false;openBarrier(true);}respawnDroppedStones();}
   spawnAll(false);daggers.length=0;daggerDrops.length=0;loot.length=0;boulders.length=0;bolts.length=0;parts.length=0;
-  const p=player;if(pos){p.x=pos.x;p.y=pos.y;}else if(r==='sky'){p.x=(SKY.W>>1)*TS;p.y=(SKY.H-3)*TS-p.h;}else if(r==='deep'){p.x=(DEEP.W>>1)*TS;p.y=6*TS-p.h;}else if(r==='inside'){p.x=INSIDE.door.x;p.y=INSIDE.door.y;}else if(realm==='main'&&fromDeep){p.x=110*TS;p.y=38*TS-p.h;fromDeep=false;}else{p.x=631*TS;p.y=8*TS-p.h;}
+  const p=player;if(pos){p.x=pos.x;p.y=pos.y;}else if(r==='sky'){p.x=(SKY.W>>1)*TS;p.y=(SKY.H-3)*TS-p.h;}else if(r==='deep'){p.x=(DEEP.W>>1)*TS;p.y=6*TS-p.h;}else if(r==='inside'){p.x=INSIDE.door.x;p.y=INSIDE.door.y;}else if(realm==='main'&&fromDeep){p.x=110*TS;p.y=38*TS-p.h;fromDeep=false;}else{p.x=EX(631)*TS;p.y=8*TS-p.h;}
   p.vx=0;p.vy=0;p.safe={x:p.x,y:p.y};p.daggers=maxDaggers();p.inv=1;if(princess.follow){princess.x=p.x-30;princess.y=p.y;princess.vx=0;princess.vy=0;}snapCam();fadeIn=0.8;
   popups.push({x:p.x+p.w/2,y:p.y-30,text:r==='sky'?'THE CLOUD STAIR':r==='deep'?'THE DEEP  -  the air is thin here':r==='inside'?(INSIDE.kind==='castle'?'THE THRONE HALL':'INSIDE'):'THE GIANT\'S PERCH',life:2,color:'#ffe08a',size:18});sfx('quest');saveGame(true);}
 const updraftHere=()=>realm==='main'&&quest.i>=3&&player.x+player.w/2>=PERCH.x0&&player.x+player.w/2<=PERCH.x1&&player.y<PERCH.y;
@@ -429,7 +430,7 @@ function buildLevel(){
   carve(106,34,5,1,'#');carve(118,30,5,1,'#');carve(128,33,4,1,'#');
   carve(110,37,3,1,'^');
   // cave exit: tunnel through the east wall out to a second sunlit surface
-  carve(134,34,6,4);carve(140,0,498,38);
+  carve(134,34,6,4);carve(140,0,EX(638)-140,38);
   // the four lairs east of the village, split by low rock ridges
   carve(274,0,2,38,'#');                                   // the wall east of the village dragon; falls when it dies
   carve(271,34,2,1,'#');carve(268,31,2,1,'#');carve(271,28,2,1,'#');   // the climb
@@ -437,15 +438,16 @@ function buildLevel(){
   carve(291,22,3,1,'-');carve(295,18,3,1,'-');carve(299,14,3,1,'-');carve(303,11,3,1,'-'); // cloud steps up from the plateau
   // the cloud isles: a long archipelago across the whole sky, the giant's perch at the far end
   {const hs=[10,14,8,18,12,6,16,10,20,16,8,12,18,14];let prev=null;
-   for(let i=0;i<hs.length;i++){const x0=306+i*22,y=hs[i],w=14+(i%3)*3;carve(x0,y,w,2,'#');ISLES.push({x0,y,w});
+   const isleN=Math.max(14,Math.floor((EX(609)-306-18)/22));
+   for(let i=0;i<isleN;i++){const x0=306+i*22,y=hs[i%hs.length],w=14+(i%3)*3;carve(x0,y,w,2,'#');ISLES.push({x0,y,w});
      if(prev){const gx=prev.x0+prev.w,g=x0-gx,u=prev.y-y;
        if(u>=6){carve(gx+1,prev.y-3,3,1,'-');if(u>=8)carve(gx+4,prev.y-6,3,1,'-');}
        else if(u>=3&&g>=5)carve(gx+2,prev.y-2,3,1,'-');
        else if(g>=7)carve(gx+3,Math.max(prev.y,y)-1,3,1,'-');}
      prev={x0,y,w};}
-   carve(609,11,3,1,'-');carve(614,8,24,3,'#');}                  // the giant's perch
+   carve(EX(609),11,3,1,'-');carve(EX(614),8,24,3,'#');}                  // the giant's perch
   // the long road east: ridges every so often, open floors around the lairs
-  for(let x=300;x<632;x+=13){if(BOSS_X.some(b=>Math.abs(x-b)<10)||FT.some(f=>f.y===37&&Math.abs(f.x-(x+1))<4)||HAMLETS.some(h=>x*TS>=h.x0-3*TS&&x*TS<=h.x1))continue;
+  for(let x=300;x<EX(632);x+=13){if(BOSS_X.some(b=>Math.abs(x-b)<10)||FT.some(f=>f.y===37&&Math.abs(f.x-(x+1))<4)||HAMLETS.some(h=>x*TS>=h.x0-3*TS&&x*TS<=h.x1))continue;
     if(SHAFTS.some(h=>x<h+3&&x+3>h-1))continue;                 // never roof a shaft
     carve(x,36,3,2,'#');if(!SHAFTS.some(h=>x+6<h+3&&x+10>h-1))carve(x+6,33,4,1,'#');}
   // side caves: a shaft from the surface drops into a pocket; wall-jump the shaft to get back out
@@ -454,19 +456,19 @@ function buildLevel(){
   carve(233,38,2,6);carve(222,44,22,7);carve(226,48,3,1,'#');carve(238,47,3,1,'#');
   carve(25,12,2,3);carve(16,15,16,5);carve(19,17,3,1,'#');
   for(const h of SHAFTS)carve(h,34,2,4);                       // clear the mouth of anything the road laid over it
-  carve(341,38,2,6);carve(330,44,24,6);carve(334,47,3,1,'#');carve(348,46,3,1,'#');
-  carve(420,38,2,6);carve(410,44,24,6);carve(414,47,3,1,'#');carve(427,46,3,1,'#');
-  carve(500,38,2,6);carve(490,44,24,6);carve(494,47,3,1,'#');carve(507,46,3,1,'#');
+  carve(EX(341),38,2,6);carve(EX(330),44,24,6);carve(EX(334),47,3,1,'#');carve(EX(348),46,3,1,'#');
+  carve(EX(420),38,2,6);carve(EX(410),44,24,6);carve(EX(414),47,3,1,'#');carve(EX(427),46,3,1,'#');
+  carve(EX(500),38,2,6);carve(EX(490),44,24,6);carve(EX(494),47,3,1,'#');carve(EX(507),46,3,1,'#');
   // rolling ground along the road
   carve(186,36,5,2,'#');carve(202,36,6,2,'#');carve(204,35,2,1,'#');carve(218,37,4,1,'#');carve(226,36,4,2,'#');
   // enemies
   S('bug',22,37);S('bug',30,37);S('brute',34,37);
   S('bug',48,37);S('bug',68,37);S('bat',56,26);S('bat',65,22);
   S('bat',48,5);S('bat',72,4);S('bat',88,6);S('bat',96,5);S('bug',52,9);S('bug',78,9);S('brute',86,9);
-  S('giant',626,7);S('icedragon',360,37);S('dragon',460,37);S('stonegolem',560,37);
-  for(let x=302;x<632;x+=8){if(BOSS_X.some(b=>Math.abs(x-b)<9))continue;const k=x/8|0;S('bug',x,37);if(k%3===0)S('brute',x+3,37);if(k%2===0)S('bat',x+4,29+k%3);}
+  S('giant',EX(626),7);S('icedragon',EX(360),37);S('dragon',EX(460),37);S('stonegolem',EX(560),37);
+  for(let x=302;x<EX(632);x+=8){if(BOSS_X.some(b=>Math.abs(x-b)<9))continue;const k=x/8|0;S('bug',x,37);if(k%3===0)S('brute',x+3,37);if(k%2===0)S('bat',x+4,29+k%3);}
   ISLES.forEach((il,i)=>{S('bug',il.x0+3,il.y-1);if(il.w>=17)S('bug',il.x0+il.w-4,il.y-1);if(il.w>=20||i%2)S('brute',il.x0+(il.w>>1),il.y-1);S('bat',il.x0+il.w+1,il.y-4);if(i%3===1)S('bat',il.x0+5,il.y-6);});
-  S('bug',413,49);S('bug',425,49);S('bat',420,46);S('brute',430,49);S('bug',493,49);S('bug',505,49);S('bat',500,46);S('brute',510,49);
+  S('bug',EX(413),49);S('bug',EX(425),49);S('bat',EX(420),46);S('brute',EX(430),49);S('bug',EX(493),49);S('bug',EX(505),49);S('bat',EX(500),46);S('brute',EX(510),49);
   FT.forEach(f=>{if(f.grind)f.grind.forEach(g=>S(g[0],g[1],g[2]));});
   if(typeof gods!=='undefined')carveHideout();
   buildDoors();buildSideFolk();S('bat',270,29);S('bat',273,24);S('bug',278,25);S('bug',280,25);S('bug',282,25);S('bug',284,25);S('bug',286,25);S('bug',288,25);S('bug',290,25);S('bug',292,25);S('bug',279,25);S('bug',281,25);S('bug',283,25);S('bug',287,25);S('bug',289,25);S('bug',291,25);S('bat',279,21);S('bat',283,21);S('bat',287,21);S('bat',291,21);S('brute',281,25);S('brute',285,25);S('brute',288,25);S('brute',291,25);S('bat',297,15);S('bat',302,9);S('bug',300,37);S('bug',153,49);S('bug',163,49);S('bat',160,46);S('brute',168,49);S('bug',182,49);S('bug',184,49);S('bug',186,49);S('bug',188,49);S('bug',190,49);S('bug',192,49);S('bug',194,49);S('bug',196,49);S('bug',198,49);S('bug',183,49);S('bug',185,49);S('bug',187,49);S('bug',189,49);S('bug',193,49);S('bug',197,49);S('bat',186,46);S('bat',190,46);S('bat',194,46);S('bat',198,46);S('brute',186,49);S('brute',191,49);S('brute',195,49);S('brute',199,49);S('bug',225,50);S('bat',232,47);S('bug',240,50);S('brute',236,50);S('bat',20,18);S('bat',28,17);S('bug',24,19);S('bug',333,49);S('bat',340,46);S('brute',350,49);S('bat',345,47);S('bug',156,37);S('bug',160,37);S('bug',165,37);S('bug',170,37);S('bat',158,32);S('bat',164,31);S('bat',170,33);S('brute',167,37);S('bug',184,35);S('bug',196,37);S('bat',192,31);S('bug',212,37);S('bat',210,30);S('brute',224,37);S('bug',230,35);S('bug',178,37);S('bat',202,30);S('brute',212,37);S('bug',163,37);S('bat',168,31);S('bug',175,37);S('bat',182,30);S('bug',188,35);S('brute',195,37);S('bug',206,35);S('bat',214,31);S('bug',219,36);S('bat',228,30);S('bug',234,37);S('bug',103,37);S('brute',114,37);S('brute',126,37);S('bat',121,27);S('bug',122,37);
@@ -537,7 +539,7 @@ const QUESTS=[
 const INTRO=['You are Sir Thraine, a knight of the city. Before the knighthood you trained among the assassins, and your father was a mage; a little of his craft runs in your blood.','Monsters took you on the road. They dragged you down into the dark, and you woke in this cave with nothing but your daggers.','Find a way out.'];
 const companions=[];
 const VILLAGE={x0:240*TS,x1:262*TS,npcX:251*TS+4};
-const HAMLETS=[{x0:300*TS,x1:322*TS,name:'Frostwell',label:'FROST RAIDER'},{x0:380*TS,x1:402*TS,name:'Ashford',label:'ASH RAIDER'},{x0:590*TS,x1:612*TS,name:'Quarry End',label:'QUARRY RAIDER'}];const gods={asked:false};
+const HAMLETS=[{x0:EX(300)*TS,x1:EX(322)*TS,name:'Frostwell',label:'FROST RAIDER'},{x0:EX(380)*TS,x1:EX(402)*TS,name:'Ashford',label:'ASH RAIDER'},{x0:EX(590)*TS,x1:EX(612)*TS,name:'Quarry End',label:'QUARRY RAIDER'}];const gods={asked:false};
 const quest={i:0,stage:'offer',progress:{},base:{}};const killsOutside={};
 const dialog={open:false,lines:[],i:0,onClose:null,blink:0};
 function questCurrent(){return quest.i<QUESTS.length?QUESTS[quest.i]:null;}
@@ -618,7 +620,7 @@ function makeEnemy(t,tx,ty,o){
   e.x=tx*TS+TS/2-e.w/2;e.y=(ty+1)*TS-e.h;if(t==='bat')e.y-=40;e.hx=e.x;e.hy=e.y;
   e.outside=e.x>=OUT2.x0;e.road=e.outside&&e.x<VILLAGE.x0;e.spawnId=realmPrefix()+t+'@'+tx+','+ty;
   if(!e.label){const horde=TRAPS.some(q=>tx*TS>=q.zone[0]&&tx*TS<=q.zone[1]&&Math.abs(ty*TS-(q.rope.y+q.rope.h))<8*TS);
-    const base=realm==='deep'?40+Math.floor(ty/16):realm==='sky'?18+Math.floor((SKY.H-ty)/24):(ty<=24&&tx>=290)?12+Math.floor((tx-290)/45):(tx>=276)?5+Math.floor((tx-276)/50):(tx>=139)?1+Math.floor((tx-139)/60):Math.floor(tx/60);
+    const base=realm==='deep'?40+Math.floor(ty/16):realm==='sky'?18+Math.floor((SKY.H-ty)/24):(ty<=24&&tx>=290)?12+Math.floor((tx-290)/45):(tx>=276)?5+Math.floor((tx-276)/(50*EK)):(tx>=139)?1+Math.floor((tx-139)/60):Math.floor(tx/60);
     const lv=1+base+Math.floor(hash(tx*7+3,ty*13+1)*4);const elite=hash(tx*3+5,ty*11+7)>0.86;e.lv=lv+(elite?5:0);e.elite=elite;
     const hm=1+0.18*(e.lv-1);e.hp=e.maxHp=Math.round(e.maxHp*hm*(elite?1.3:1));e.xp=Math.round((XP_VALUE[t]||10)*(1+0.2*(e.lv-1))*(elite?1.5:1));const bonus=Math.floor(e.lv/8)+(elite?1:0);e.dmgContact=(e.dmgContact||1)+bonus;if(e.dmgSwing)e.dmgSwing+=bonus;e.tier=e.lv>=18?3:e.lv>=12?2:e.lv>=5?1:0;
     if(horde){e.horde=true;e.hp=e.maxHp=Math.round(e.maxHp*1.5);e.dmgContact=(e.dmgContact||1)+1;}}
@@ -633,7 +635,7 @@ function spawnAll(first){
 }
 function spawnVillageWave(){for(const [t,x,y] of [['bat',264,31],['bat',272,32],['dragon',268,37]]){const e=makeEnemy(t,x,y);if(!deadSpawns.has(e.spawnId)&&!enemies.some(o=>o.spawnId===e.spawnId))enemies.push(e);}npc.waveSpawned=true;}
 const hints={armor:false,gasp:false};
-const HOLE_X=[292,306,330,372,404,444,484,528,548,580];
+const HOLE_X=[292,306,330,372,404,444,484,528,548,580].map(EX);
 function carvePit(){if(realm!=='main')return;if(quest.i>=4)carve(112,38,2,10);carveCore();}
 function carveHideout(){carvePit();if(!gods.holeX||realm!=='main')return;const hx=gods.holeX;carve(hx,38,2,12);carve(hx-16,50,36,8);carve(hx-12,54,4,1,'#');carve(hx+12,53,4,1,'#');carve(hx-6,56,3,1,'#');}
 const inHideout=()=>realm==='main'&&gods.holeX&&Math.abs(player.x+player.w/2-(gods.holeX+1)*TS)<20*TS&&player.y>46*TS;
@@ -1169,7 +1171,7 @@ function drawBackgroundLow(){const k=1/TPX;bgx.clearRect(0,0,bgCanvas.width,bgCa
 const lightCanvas=document.createElement('canvas');lightCanvas.width=Math.ceil(W/TPX);lightCanvas.height=Math.ceil(H/TPX);const lgx=lightCanvas.getContext('2d');const lightImg=lgx.createImageData(lightCanvas.width,lightCanvas.height);
 const BAYER=[0,2,3,1];
 function drawLight(){const p=player;const lw=lightCanvas.width,lh=lightCanvas.height;const px=(p.x+p.w/2-cam.x)/TPX,py=(p.y+p.h/2-cam.y)/TPX;const LX=[];for(const e of enemies){if(e.dead)continue;if(e.t==='mage')LX.push({x:(e.x+e.w/2-cam.x)/TPX,y:(e.y+e.h/2-cam.y)/TPX,r:90/TPX*TPX/TPX*1,R:300/TPX});else if(e.t==='ward')LX.push({x:(e.x+e.w/2-cam.x)/TPX,y:(e.y-cam.y)/TPX,R:150/TPX});}const d=lightImg.data;const r0=60/TPX,r1=520/TPX,LV=7;
-  for(let y=0;y<lh;y++){const dy=y+0.5-py;for(let x=0;x<lw;x++){const dx=x+0.5-px;const dist=Math.sqrt(dx*dx+dy*dy);let v=clamp((dist-r0)/(r1-r0),0,1)*0.78;for(const L of LX){const ddx=x+0.5-L.x,ddy=y+0.5-L.y;const dd=Math.sqrt(ddx*ddx+ddy*ddy);if(dd<L.R)v=Math.min(v,(0.15+0.63*dd/L.R));}const wx=x*TPX+cam.x,wy=y*TPX+cam.y;if(realm==='inside')v*=0.26;else if(realm==='sky'||(wx>=OUT.x0&&wx<OUT.x1&&wy<OUT.y1)||(wx>=OUT2.x0&&wx<OUT2.x1&&wy<OUT2.y1))v*=0.1;else if(realm==='deep')v*=0.7;else if(wx<OUT.x1+4*TS&&wy>=OUT.y1&&wy<OUT.sy1+8*TS){const depth=(wy-OUT.y1)/(OUT.sy1+8*TS-OUT.y1);const spread=depth*70;if(wx>=OUT.sx0-spread&&wx<OUT.sx1+spread)v*=0.12+0.88*depth;}else if(wx>=OUT2.tx0-9*TS&&wx<OUT2.tx1&&wy>=OUT2.ty0-3*TS&&wy<OUT2.ty1+TS){const d=clamp((OUT2.tx1-wx)/(12*TS),0,1);v*=0.12+0.88*d;}const th=BAYER[(x&1)+((y&1)<<1)]/4;const q=Math.floor(v*LV+th)/LV;const i=(y*lw+x)*4;d[i]=0;d[i+1]=0;d[i+2]=5;d[i+3]=Math.min(255,q*255)|0;}}
+  for(let y=0;y<lh;y++){const dy=y+0.5-py;for(let x=0;x<lw;x++){const dx=x+0.5-px;const dist=Math.sqrt(dx*dx+dy*dy);let v=clamp((dist-r0)/(r1-r0),0,1)*0.78;for(const L of LX){const ddx=x+0.5-L.x,ddy=y+0.5-L.y;const dd=Math.sqrt(ddx*ddx+ddy*ddy);if(dd<L.R)v=Math.min(v,(0.15+0.63*dd/L.R));}const wx=x*TPX+cam.x,wy=y*TPX+cam.y;if(realm==='inside')v*=(INSIDE.kind==='castle'?0.10:0.26);else if(realm==='sky'||(wx>=OUT.x0&&wx<OUT.x1&&wy<OUT.y1)||(wx>=OUT2.x0&&wx<OUT2.x1&&wy<OUT2.y1))v*=0.1;else if(realm==='deep')v*=0.7;else if(wx<OUT.x1+4*TS&&wy>=OUT.y1&&wy<OUT.sy1+8*TS){const depth=(wy-OUT.y1)/(OUT.sy1+8*TS-OUT.y1);const spread=depth*70;if(wx>=OUT.sx0-spread&&wx<OUT.sx1+spread)v*=0.12+0.88*depth;}else if(wx>=OUT2.tx0-9*TS&&wx<OUT2.tx1&&wy>=OUT2.ty0-3*TS&&wy<OUT2.ty1+TS){const d=clamp((OUT2.tx1-wx)/(12*TS),0,1);v*=0.12+0.88*d;}const th=BAYER[(x&1)+((y&1)<<1)]/4;const q=Math.floor(v*LV+th)/LV;const i=(y*lw+x)*4;d[i]=0;d[i+1]=0;d[i+2]=5;d[i+3]=Math.min(255,q*255)|0;}}
   lgx.putImageData(lightImg,0,0);ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(lightCanvas,0,0,W,H);ctx.restore();}
 
 /* ---------- pixel effect helpers (everything snaps to a PX grid) ---------- */
@@ -1190,7 +1192,7 @@ function drawMotes(){ctx.fillStyle='rgba(180,200,240,0.35)';for(const m of bg.mo
 
 /* ---------- the outside (sky, sun, hills, trees) and the daylight shaft ---------- */
 const OUT={x0:2*TS,x1:32*TS,y0:0,y1:12*TS,sx0:10*TS,sx1:14*TS,sy1:26*TS,trees:[5,17,24,29]};           // west surface, reached through the ceiling shaft
-const OUT2={x0:140*TS,x1:638*TS,y0:0,y1:38*TS,tx0:134*TS,tx1:140*TS,ty0:34*TS,ty1:38*TS,trees:[144,151,159,166,173,180,190,197,209,215,222,231,237,265,271]}; // east surface, the cave exit
+const OUT2={x0:140*TS,x1:EX(638)*TS,y0:0,y1:38*TS,tx0:134*TS,tx1:140*TS,ty0:34*TS,ty1:38*TS,trees:[144,151,159,166,173,180,190,197,209,215,222,231,237,265,271]}; // east surface, the cave exit
 const ZONES=[OUT,OUT2];
 function bgRidge(x,w,gy,base,amp,seed,col,par,snow){
   const off=cam.x*par;ctx.fillStyle=col;
@@ -1275,6 +1277,7 @@ function drawCastle(bx,gy){
 /* ---------- going inside: the houses and the keep ---------- */
 const INSIDE={kind:null,seed:0,name:'',ret:{x:0,y:0},door:{x:0,y:0},folk:[]};
 const DOORS=[];
+const HALL_IMG=new Image();HALL_IMG.onload=()=>{HALL_IMG.ok=true;};HALL_IMG.src='sprites/hall.jpg'+ASSET_VER;
 function buildDoors(){DOORS.length=0;const gy=OUT2.y1;
   DOORS.push({x:VILLAGE.x0+745,y:gy,kind:'castle',seed:0,name:'the keep'});}   // only the keep opens
 function doorNear(){if(realm!=='main')return null;const px=player.x+player.w/2,py=player.y+player.h;
@@ -1295,12 +1298,8 @@ function buildInside(kind){
     carve(2,4,60,15);                                   // the hall, floor solid from y19
     carve(48,17,12,2,'#');                              // the dais under the throne
     carve(46,18,2,1,'#');                               // a step up to it
-    carve(13,12,9,1,'-');carve(27,10,9,1,'-');carve(39,13,8,1,'-');   // galleries, for anyone who climbs
-    carve(20,7,8,1,'-');
     INSIDE.door={x:5*TS,y:19*TS-player.h};
     king.x=54*TS;king.y=17*TS-king.h;
-    INSIDE.folk.push({x:17*TS,y:19*TS,face:1,name:'A Guard',lines:['Stand where you like, sir. The throne sees the whole hall from up there anyway.','Two of us on that door, and neither of us stopped what came through it.']});
-    INSIDE.folk.push({x:33*TS,y:19*TS,face:-1,name:'The Steward',lines:['The princess\u2019s rooms are shut, and His Majesty will not have them opened.','He sits there through the night. He will not be talked out of it.']});
   } else {
     carve(2,5,26,10);                                   // one warm room, floor solid from y15
     carve(17,9,8,1,'-');                                // the sleeping loft
@@ -1335,6 +1334,9 @@ function drawDoors(){if(realm!=='main')return;const near=doorNear();
 function drawRoomBG(){
   const cas=INSIDE.kind==='castle';
   ctx.fillStyle=cas?'#20222f':'#2a1e18';ctx.fillRect(0,0,W,H);
+  if(cas&&HALL_IMG.ok){ctx.save();ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(HALL_IMG,-cam.x,-cam.y,MW*TS,MH*TS);ctx.restore();
+    ctx.fillStyle='rgba(6,7,14,0.18)';ctx.fillRect(0,0,W,H);return;}
   const ox=-cam.x*0.7,oy=-cam.y*0.7;
   if(cas){
     for(let i=0;i<9;i++){ctx.fillStyle='rgba(12,13,20,0.55)';pxRect(ox+120+i*220,oy+120,60,340);}
@@ -1360,15 +1362,8 @@ function drawInsideDecor(){if(realm!=='inside')return;const cas=INSIDE.kind==='c
     ctx.fillStyle='#ffb648';pxDisc(x,y-6,7*f);ctx.fillStyle='#ffe9a8';pxDisc(x,y-8,4*f);
     if(Math.random()<0.25)part(cam.x+x+rnd(-4,4),cam.y+y-10,rnd(-8,8),rnd(-40,-12),0.7,'#ffb648',2,-10);};
   if(cas){
-    ctx.fillStyle='#7a2230';pxRect(6*TS-cam.x,F-6,44*TS,6);
-    ctx.fillStyle='#9c2c3c';pxRect(6*TS-cam.x,F-6,44*TS,3);
-    for(let i=0;i<10;i++){ctx.fillStyle='rgba(220,180,90,0.5)';pxRect(6*TS-cam.x+i*140+20,F-6,60,3);}
-    for(let i=0;i<7;i++){const x=9*TS-cam.x+i*230;
-      ctx.fillStyle='#575c73';pxRect(x,F-13*TS,34,13*TS);ctx.fillStyle='#6d7389';pxRect(x,F-13*TS,10,13*TS);
-      ctx.fillStyle='#474c60';pxRect(x-6,F-13*TS-14,46,14);pxRect(x-6,F-18,46,18);}
-    for(let i=0;i<6;i++)torch(11*TS-cam.x+i*230,F-5*TS);
-    const dx=48*TS-cam.x,dy=17*TS-cam.y;
-    ctx.fillStyle='#8a6c1e';pxRect(dx,dy-4,12*TS,4);
+    const dx=48*TS-cam.x,dy=17*TS-cam.y;                                        // the dais and the canopy over it
+    ctx.fillStyle='#4a4650';pxRect(dx,dy-6,12*TS,6);ctx.fillStyle='#8a6c1e';pxRect(dx,dy-2,12*TS,2);
     ctx.fillStyle='#3a2c46';pxRect(dx+5*TS-10,dy-150,108,150);ctx.fillStyle='#4a3a58';pxRect(dx+5*TS-10,dy-150,108,8);
     ctx.fillStyle='#d9b24a';pxRect(dx+5*TS-16,dy-164,120,16);
     for(let i=0;i<7;i++){ctx.fillStyle='#d9b24a';pxRect(dx+5*TS-14+i*17,dy-176,10,14);}
@@ -1391,10 +1386,10 @@ function drawInsideDecor(){if(realm!=='inside')return;const cas=INSIDE.kind==='c
     ctx.fillStyle='#8a6a4a';pxRect(bx+4,F-48,122,10);ctx.fillStyle='#b8a48a';pxRect(bx+94,F-56,32,10);
     torch(9*TS-cam.x,F-5*TS);}
   const dx=INSIDE.door.x-cam.x+player.w/2,dy=(cas?19:15)*TS-cam.y;
-  ctx.fillStyle='#120e10';pxRect(dx-26,dy-72,52,72);
-  ctx.fillStyle='#3d2a1c';pxRect(dx-22,dy-68,44,68);
-  ctx.fillStyle='#4d3624';for(let i=0;i<44;i+=8)pxRect(dx-22+i,dy-68,4,68);
-  ctx.fillStyle='#8a7b5a';pxRect(dx+8,dy-36,6,6);
+  if(!cas){ctx.fillStyle='#120e10';pxRect(dx-26,dy-72,52,72);
+    ctx.fillStyle='#3d2a1c';pxRect(dx-22,dy-68,44,68);
+    ctx.fillStyle='#4d3624';for(let i=0;i<44;i+=8)pxRect(dx-22+i,dy-68,4,68);
+    ctx.fillStyle='#8a7b5a';pxRect(dx+8,dy-36,6,6);}
   ctx.fillStyle='rgba(150,190,240,'+(0.08+0.03*Math.sin(time*2))+')';pxDisc(dx,dy-34,54);
   for(const f of INSIDE.folk){const x=f.x+12-cam.x,y=f.y-cam.y;if(x<-60||x>W+60)continue;drawVillager(x,y,f);
     if(f.talk&&state==='play'){ctx.font='12px Georgia';ctx.textAlign='center';ctx.fillStyle='rgba(255,224,138,0.95)';
@@ -1447,25 +1442,31 @@ function drawTutorial(){if(!tutOn())return;
   ctx.font='13px Georgia';ctx.fillStyle='#e2e8f6';ctx.fillText(best.text,W/2,by+(best.title?44:23));}
 /* ---------- the villages have their own troubles ---------- */
 const sideKills={};const sideState={};
+const FOLK={ok:false,n:5};(function(){const im=new Image();im.onload=()=>{FOLK.img=im;FOLK.fw=im.width/FOLK.n;FOLK.fh=im.height;FOLK.ok=true;};im.src='sprites/folk.png'+ASSET_VER;})();
 const SIDEQ=[
-  {id:'mill',village:0,name:'Maren the Miller',t:'bug',need:8,xp:150,pot:{health:2},
-   offer:['The low cave is crawling again. They come up the shaft at night and get into the grain.','Eight of them, sir knight, and the mill can run another winter.'],
-   nag:['Still coming up the shaft, are they.'],
-   done:['That is the lot of them. Here, take these off me. My sister brews them and I have no use for the things.','If the caves fill up again I will find you.']},
-  {id:'frost',village:1,name:'Bern the Trapper',t:'bat',need:6,xp:500,pot:{fury:1,health:1},
-   offer:['Frostwell lost two dogs to the things on the ice road. They come out of the white and you never hear them.','Six wings on the ground and I will sleep again.'],
-   nag:['Six of them, and I stopped counting at one.'],
-   done:['Six. I heard the last one drop from here.','Drink that before something bigger finds you. It burns going down, but it works.']},
-  {id:'ash',village:2,name:'Sella the Smith',t:'brute',need:5,xp:1200,pot:{health:3},
-   offer:['The big ones broke my forge wall twice this month. I can mend a wall. I cannot mend five of them.','Put five down and the anvil is worth keeping.'],
-   nag:['Five. Not four. I will know.'],
-   done:['Five, and the wall still standing. That is a first.','Take the potions. I have no coin and you would not take it anyway.']},
-  {id:'quarry',village:3,name:'Old Pell',t:'stonegolem',need:2,xp:3000,pot:{shadow:1,health:2},
-   offer:['Something walks the quarry at night and it is made of the quarry.','Two of them. Break two and the cutters will go back to work.'],
-   nag:['Two of the stone ones. They do not bleed, so do not wait for it.'],
-   done:['Broke them both. The cutters saw the dust from here.','This one hides you. Do not ask me how. Drink it when the ground gets thin under you.']}];
+  {id:'hask',spr:0,at:144,sit:true,name:'Old Hask',t:'bug',need:10,xp:120,pot:{health:1},
+   offer:['Sit a while, sir. Nobody sits with me, and I have sat at this cave mouth a long time.','The crawling things come up out of there and eat what little the road gives me. Ten of them and I will have a quiet week.'],
+   nag:['Ten. I am counting on my fingers and I have run out.'],
+   done:['A quiet week. I have not had one of those since the old king.','Take this. Somebody left it. I have no use for a thing that heals a man who is already done.']},
+  {id:'tam',spr:1,at:110,name:'Tam',t:'bat',need:6,xp:260,pot:{health:2},
+   offer:['Mother says I am not to go near the cave mouth any more. The wings come out at dusk.','Six of them, sir. Then I can go back to the good fishing spot.'],
+   nag:['Six. I would count them myself but I am not allowed out.'],
+   done:['Six! I watched the last one drop from the wall.','Here. I took these from the cupboard. Do not tell her.']},
+  {id:'ilsa',spr:2,at:110,name:'Mother Ilsa',t:'brute',need:5,xp:700,pot:{fury:1,health:1},
+   offer:['Frostwell buries somebody every time the big ones come down off the ice.','Five, and I will stop keeping a spade by the door.'],
+   nag:['Five of the big ones. Not four, and do not tell me four is close.'],
+   done:['Five. The ground can stay shut a while.','Drink that one when something bigger than you is laughing. It burns. It works.']},
+  {id:'corin',spr:3,at:110,name:'Corin',t:'brute',need:12,xp:1600,pot:{health:3},
+   offer:['My father kept the forge lit through worse than this and I will not be the one who lets it go out.','A dozen of them off the ash road and the cutters will come back to work.'],
+   nag:['A dozen. I am still hearing them at night.'],
+   done:['A dozen, and the wall still standing. My father would have said nothing and meant it kindly.','Take the potions. I have no coin and you would not take it anyway.']},
+  {id:'aldous',spr:4,at:110,name:'Brother Aldous',t:'stonegolem',need:3,xp:4000,pot:{shadow:1,health:2},
+   offer:['The quarry walks at night, and what walks is the quarry itself.','Three of them, sir knight. I have said the words over this place and the words are not enough.'],
+   nag:['Three of the stone ones. They do not bleed, so do not stand there waiting for it.'],
+   done:['Three. The dust settled and the cutters saw it from the road.','This one hides a man. I do not ask how and neither should you. Drink it where the ground goes thin.']}];
 function sideVillage(i){return i===0?VILLAGE:HAMLETS[i-1];}
-function sideFolk(){return SIDEQ.map(q=>({q,x:sideVillage(q.village).x0+110,y:OUT2.y1,name:q.name,face:1}));}
+
+function sideFolk(){return SIDEQ.map((q,i)=>({q,x:(q.id==='hask'?0:sideVillage(i-1).x0)+q.at*(q.id==='hask'?TS:1),y:OUT2.y1,name:q.name,face:1,spr:q.spr,sit:!!q.sit}));}
 let SIDEFOLK=[];
 function buildSideFolk(){SIDEFOLK=sideFolk();for(const q of SIDEQ)if(!sideState[q.id])sideState[q.id]={s:'none',base:0};}
 const sideCount=q=>Math.max(0,(sideKills[q.t]||0)-(sideState[q.id].base||0));
@@ -1489,11 +1490,15 @@ function updateSideFolk(dt){const p=player;if(state!=='play'||realm!=='main')ret
 function drawSideFolk(){if(realm!=='main')return;
   for(const f of SIDEFOLK){const x=f.x+12-cam.x,y=f.y-cam.y;if(x<-60||x>W+60)continue;
     const st=sideState[f.q.id]||{s:'none'};
-    drawVillager(x,y,f);
+    if(FOLK.ok){const sc=80/FOLK.fh,dw=FOLK.fw*sc,dh=FOLK.fh*sc;
+      ctx.fillStyle='rgba(0,0,0,0.20)';pxDisc(x,y+1,f.sit?22:15);
+      ctx.save();ctx.translate(x,y);ctx.scale(f.face,1);ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(FOLK.img,f.spr*FOLK.fw,0,FOLK.fw,FOLK.fh,-dw/2,-dh,dw,dh);ctx.restore();}
+    else drawVillager(x,y,f);
     if(st.s!=='done'){const k=st.s==='active'&&sideCount(f.q)>=f.q.need;ctx.fillStyle=k?'rgba(157,242,157,0.9)':'rgba(255,224,138,0.9)';
-      const by=y-96+Math.sin(time*2+f.x)*3;pxRect(x-3,by,6,16);pxRect(x-3,by+20,6,6);}
+      const by=y-(f.sit?54:92)+Math.sin(time*2+f.x)*3;pxRect(x-3,by,6,16);pxRect(x-3,by+20,6,6);}
     if(f.talk&&state==='play'){ctx.font='12px Georgia';ctx.textAlign='center';ctx.fillStyle='rgba(255,224,138,0.95)';
-      ctx.fillText((pad.connected?'d-pad up: ':'E: ')+(st.s==='active'?'speak to '+f.name.split(' ')[0]:'a job from '+f.name.split(' ')[0]),x,y-78);}}}
+      ctx.fillText((pad.connected?'d-pad up: ':'E: ')+(st.s==='active'?'speak to '+f.name:'a job from '+f.name),x,y-(f.sit?66:100));}}}
 function sideJobText(){for(const q of SIDEQ){const st=sideState[q.id];if(st&&st.s==='active')return q.name+': '+Math.min(q.need,sideCount(q))+'/'+q.need+' '+q.t;}return null;}
 /* ---------- the cloud stair is barred at every boss ---------- */
 function skyGates(){return realm==='sky'?SKY.tiers.filter(t=>t.boss&&t.id&&t.gx1!==undefined&&!deadSpawns.has(t.id)):[];}
@@ -1556,6 +1561,9 @@ function drawTiles(){const tA=(x,y)=>{const c=tileAt(x,y);return c==='i'?'#':c;}
   for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++){
     const t0=map[ty][tx],t=t0==='i'?'#':t0;const sx=(tx*TS-cam.x)|0,sy=(ty*TS-cam.y)|0;
     if(realm==='inside'){const cas=INSIDE.kind==='castle',h=hash(tx,ty);
+      if(cas&&HALL_IMG.ok){if(t==='#'){const up=tA(tx,ty-1);if(up!=='#'){ctx.fillStyle='rgba(60,56,50,0.55)';ctx.fillRect(sx,sy,TS,6);ctx.fillStyle='rgba(180,172,156,0.35)';ctx.fillRect(sx,sy,TS,3);}else{ctx.fillStyle='rgba(18,18,24,0.72)';ctx.fillRect(sx,sy,TS,TS);}}
+        else if(t==='-'){ctx.fillStyle='#5a4028';ctx.fillRect(sx,sy,TS,8);ctx.fillStyle='#7a5a38';ctx.fillRect(sx,sy,TS,4);}
+        continue;}
       if(t==='#'){const up=tA(tx,ty-1),v=(h*12)|0;
         ctx.fillStyle=cas?'rgb('+(56+v)+','+(58+v)+','+(72+v)+')':'rgb('+(60+v)+','+(46+v)+','+(36+v)+')';ctx.fillRect(sx,sy,TS,TS);
         ctx.fillStyle='rgba(0,0,0,0.22)';ctx.fillRect(sx,sy,TS,4);ctx.fillRect(sx+((ty%2)?0:16),sy,4,TS);
@@ -1569,7 +1577,7 @@ function drawTiles(){const tA=(x,y)=>{const c=tileAt(x,y);return c==='i'?'#':c;}
     if(t==='#'){
       const h=hash(tx,ty);const up=tA(tx,ty-1),dn=tA(tx,ty+1),lf=tA(tx-1,ty),rt=tA(tx+1,ty);
       const inner=up==='#'&&dn==='#'&&lf==='#'&&rt==='#';
-      const outside=realm==='sky'||(tx<34&&ty<=14)||(tx>=139&&((ty>=32&&ty<=41)||ty<=24));const biome=!outside?'cave':(realm==='sky'||ty<=24)?'cloud':tx>=530?'quarry':tx>=430?'fire':tx>=340?'ice':'grass';const v=(inner?22:34)+h*14|0;
+      const outside=realm==='sky'||(tx<34&&ty<=14)||(tx>=139&&((ty>=32&&ty<=41)||ty<=24));const biome=!outside?'cave':(realm==='sky'||ty<=24)?'cloud':tx>=EX(530)?'quarry':tx>=EX(430)?'fire':tx>=EX(340)?'ice':'grass';const v=(inner?22:34)+h*14|0;
       ctx.fillStyle=biome==='cave'?'rgb('+(v-6)+','+(v-4)+','+(v+10)+')':biome==='cloud'?'rgb('+(v+200)+','+(v+204)+','+(v+212)+')':biome==='ice'?'rgb('+(v+40)+','+(v+52)+','+(v+70)+')':biome==='fire'?'rgb('+(v+22)+','+(v+2)+','+(v-4)+')':biome==='quarry'?'rgb('+(v+20)+','+(v+20)+','+(v+24)+')':'rgb('+(v+24)+','+(v+12)+','+(v)+')';ctx.fillRect(sx,sy,TS,TS);
       if(h>0.6){ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fillRect(sx+(h*6|0)*4,sy+(hash(ty,tx)*6|0)*4,4,4);}
       if(up!=='#'){if(outside){const top=biome==='cloud'?['#e6ecf7','#ffffff','#ffffff']:biome==='ice'?['#9fd0f0','#e8f6ff','#ffffff']:biome==='fire'?['#5a3a2a','#7a4a32','#ff8a3a']:biome==='quarry'?['#7a7f8a','#a9aeb8','#c9ced8']:['#4f7d3a','#7cae55','#9ccf6a'];ctx.fillStyle=top[0];ctx.fillRect(sx,sy+4,TS,4);ctx.fillStyle=top[1];ctx.fillRect(sx,sy,TS,4);if(h>0.35){ctx.fillStyle=top[2];ctx.fillRect(sx+(h*6|0)*4,sy-4,biome==='grass'?8:4,4);}}else{ctx.fillStyle='#4f5670';ctx.fillRect(sx,sy+4,TS,4);ctx.fillStyle='#6b76a0';ctx.fillRect(sx,sy,TS,4);if(h>0.5){ctx.fillStyle='#5f7f86';ctx.fillRect(sx+(h*6|0)*4,sy-4,8,4);}}}
@@ -1959,6 +1967,8 @@ let mapSel=0,ftVisits=0;
 function skyFT(){return SKY.tiers.map((t,i)=>({name:'Sky tier '+(i+1),desc:'The '+(t.boss==='stonegolem'?'golem':'dragon')+' you slew here keeps the way open. '+Math.round(SKY.H-3-t.y)+' clouds up.',sky:i,x:606,y:7-i*1.3})).filter(f=>SKY.tiers[f.sky].id&&deadSpawns.has(SKY.tiers[f.sky].id));}
 const BOSS_FT=[{id:'icedragon@360,37',name:"Ice dragon's hollow",x:356,y:37,row:2,desc:'The frozen hollow. Its dragon is dead; the ice stone was here.'},{id:'dragon@460,37',name:"Fire dragon's canyon",x:456,y:37,row:2,desc:'The burning canyon, quiet now.'},{id:'stonegolem@560,37',name:"Golem's quarry",x:556,y:37,row:2,desc:'The old quarry where the stone golem fell.'}];
 const bossFT=()=>BOSS_FT.filter(f=>deadSpawns.has(f.id));
+(function stretchFT(){const fx=o=>{if(o.x!==undefined&&o.x>=300)o.x=EX(o.x);if(o.grind)for(const g of o.grind)if(g[1]>=300)g[1]=EX(g[1]);};FT.forEach(fx);BOSS_FT.forEach(fx);
+  for(const f of BOSS_FT)f.id=f.id.replace(/@(\d+),/,(m,d)=>'@'+EX(+d)+',');})();
 const FTL=()=>FT.concat(bossFT(),skyFT());
 let travel=null;
 function travelTo(i){if(travel)return;travel={t:0,to:i,phase:'out'};state='travel';sfx('stun');sfx('perfect');}
@@ -1972,7 +1982,7 @@ function updateTravel(dt){const p=player;travel.t+=dt;
 function travelAlpha(){if(!travel)return 1;return travel.phase==='out'?clamp(1-travel.t/0.45,0,1):clamp((travel.t-0.15)/0.4,0,1);}
 function drawTravel(){if(!travel)return;const k=travel.phase==='out'?clamp(travel.t/0.55,0,1):clamp(1-travel.t/0.6,0,1);ctx.fillStyle='rgba(3,4,10,'+k+')';ctx.fillRect(0,0,W,H);
   const p=player,cx=p.x+p.w/2-cam.x;ctx.fillStyle='rgba(154,216,255,'+(0.5*Math.sin(k*Math.PI))+')';pxRect(cx-6,0,12,H);ctx.fillStyle='rgba(255,255,255,'+(0.9*Math.sin(k*Math.PI))+')';pxRect(cx-2,0,4,H);}
-function mapPointPos(f){const x=34+(f.x/640)*(W-68);const y=H/2+58-(38-f.y)*5.2;return {x,y};}
+function mapPointPos(f){const x=34+(f.x/MAIN_W)*(W-68);const y=H/2+58-(38-f.y)*5.2;return {x,y};}
 let mapPage=0,itemSel=0;
 const tabRect=i=>({x:W/2-200+i*140,y:40,w:120,h:26});let skillSel=0;
 const TREE_TOP=112,TREE_ROW=37,TREE_COLW=250;
@@ -2068,11 +2078,11 @@ function drawMap(){
   if(mapPage===1){drawItems();return;}
   if(mapPage===2){drawSkills();return;}
   if(realm==='sky'){drawSkyMap();return;}if(realm==='deep'){drawDeepMap();return;}
-  const y0=H/2+58;const sx=x=>34+(x/640)*(W-68);
-  ctx.fillStyle='#1d2030';ctx.fillRect(sx(0),y0-150,sx(140)-sx(0),176);ctx.fillStyle='#3f6b38';ctx.fillRect(sx(140),y0-8,sx(274)-sx(140),34);ctx.fillStyle='#6b4a3a';ctx.fillRect(sx(276),y0-8,sx(638)-sx(276),34);ctx.fillStyle='#2b2e44';ctx.fillRect(sx(274),y0-150,sx(276)-sx(274),160);ctx.fillStyle='#4a3a30';ctx.fillRect(sx(276),y0-64,sx(296)-sx(276),56);
-  ctx.fillStyle='rgba(255,255,255,0.9)';for(let i=0;i<14;i++)pxRect(sx(306+i*22),y0-96-(i%3)*10,sx(14)-sx(0),8);
+  const y0=H/2+58;const sx=x=>34+(x/MAIN_W)*(W-68);
+  ctx.fillStyle='#1d2030';ctx.fillRect(sx(0),y0-150,sx(140)-sx(0),176);ctx.fillStyle='#3f6b38';ctx.fillRect(sx(140),y0-8,sx(274)-sx(140),34);ctx.fillStyle='#6b4a3a';ctx.fillRect(sx(276),y0-8,sx(EX(638))-sx(276),34);ctx.fillStyle='#2b2e44';ctx.fillRect(sx(274),y0-150,sx(276)-sx(274),160);ctx.fillStyle='#4a3a30';ctx.fillRect(sx(276),y0-64,sx(296)-sx(276),56);
+  ctx.fillStyle='rgba(255,255,255,0.9)';for(const il of ISLES)pxRect(sx(il.x0),y0-96-((il.y%3))*10,Math.max(3,sx(il.w)-sx(0)),8);
   if(realm==='sky'){ctx.textAlign='center';ctx.font='13px Georgia';ctx.fillStyle='#bfe6ff';ctx.fillText('You are high on the cloud stair. Travelling anywhere brings you back down.',W/2,86);}
-  ctx.fillStyle='#8d93a8';ctx.font='12px Georgia';ctx.fillText('the cave',(sx(0)+sx(140))/2,y0+44);ctx.fillText('the road',(sx(140)+sx(274))/2,y0+44);ctx.fillText('the lairs',(sx(276)+sx(430))/2,y0+44);ctx.fillText('the clouds',sx(330),y0-160);
+  ctx.fillStyle='#8d93a8';ctx.font='12px Georgia';ctx.fillText('the cave',(sx(0)+sx(140))/2,y0+44);ctx.fillText('the road',(sx(140)+sx(274))/2,y0+44);ctx.fillText('the lairs',(sx(276)+sx(EX(638)))/2,y0+44);ctx.fillText('the clouds',sx(EX(430)),y0-160);
   FTL().forEach((f,i)=>{const q=mapPointPos(f);const sel=i===mapSel;ctx.fillStyle=sel?'#ffe08a':(f.grind?'#d94a3a':'#e8eaf2');ctx.beginPath();ctx.arc(q.x,q.y,sel?9:6,0,7);ctx.fill();if(sel){ctx.strokeStyle='#ffe08a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(q.x,q.y,15,0,7);ctx.stroke();}
     ctx.fillStyle=sel?'#ffe08a':'#c8ccd8';ctx.font=(sel?'bold ':'')+(f.sky!==undefined?'10px':'13px')+' Georgia';if(f.sky!==undefined){ctx.textAlign='right';ctx.fillText(f.name,q.x-10,q.y+4);ctx.textAlign='center';}else ctx.fillText(f.name,q.x,q.y-16-(f.row!==undefined?f.row:(i%2))*13);});
   {const me=realm==='sky'?{x:620,y:7}:{x:player.x/TS,y:(player.y+player.h)/TS-1};const q=mapPointPos(me);const pu=1+0.15*Math.sin(time*5);
@@ -2316,7 +2326,7 @@ let last=performance.now(),acc=0,lastFrameAt=performance.now(),rafId=0;
 function frame(now){lastFrameAt=now;const dtR=Math.min(0.1,(now-last)/1000);last=now;acc+=dtR;while(acc>=1/60){const ts=slowmo>0?0.35:1;slowmo-=1/60;step(ts/60);acc-=1/60;}draw();cancelAnimationFrame(rafId);rafId=requestAnimationFrame(frame);}
 setInterval(()=>{if(performance.now()-lastFrameAt>100)frame(performance.now());},50);
 
-buildSky();spawnsSky.length=0;stones.length=0;resetMap(640,64,'#');buildLevel();spawnAll(true);
+buildSky();spawnsSky.length=0;stones.length=0;resetMap(MAIN_W,64,'#');buildLevel();spawnAll(true);
 player.x=4*TS+6;player.y=38*TS-player.h;player.safe={x:player.x,y:player.y};respawn={x:player.x,y:player.y};
 snapCam();
 {let boot=null;try{boot=sessionStorage.getItem('cr_boot');sessionStorage.removeItem('cr_boot');}catch(e){}
