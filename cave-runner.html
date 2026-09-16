@@ -2068,6 +2068,12 @@ function drawTravel(){if(!travel)return;const k=travel.phase==='out'?clamp(trave
 function mapPointPos(f){const x=34+(f.x/MAIN_W)*(W-68);const y=H/2+58-(38-f.y)*5.2;return {x,y};}
 let mapPage=0,itemSel=0;
 const tabRect=i=>({x:W/2-268+i*134,y:40,w:126,h:26});const TABS=4;let skillSel=0;
+const itemRowRect=i=>({x:W/2-220,y:100+i*76,w:440,h:64});
+function updateItems(){const n=POTIONS.length;
+  if(mouse.active){for(let i=0;i<n;i++){const r=itemRowRect(i);if(mouse.x>=r.x&&mouse.x<=r.x+r.w&&mouse.y>=r.y&&mouse.y<=r.y+r.h){itemSel=i;if(pressed.Mouse0){usePotion(POTIONS[i].k);return;}}}}
+  if(just('up')){itemSel=(itemSel+n-1)%n;sfx('menu');}if(just('down')){itemSel=(itemSel+1)%n;sfx('menu');}
+  if(just('confirm'))usePotion(POTIONS[itemSel].k);
+  if(just('map')||just('pause')){state='play';}}
 const TREE_TOP=112,TREE_ROW=37,TREE_COLW=250;
 function skillNodeRect(sk){const bx=W/2-TREE_COLW*1.5+sk.b*TREE_COLW;
   const w=sk.c===0?188:110,cx=bx+TREE_COLW/2+sk.c*58;
