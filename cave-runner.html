@@ -596,9 +596,8 @@ function updateNpc(dt){if(!npc.moving)return;npc.moveT+=dt;if(npc.moveT<1.2)retu
 /* ---------- collision ---------- */
 function moveEntity(e,dt){
   e.onGround=false;e.hitWall=0;e.hitCeil=false;
-  if(e.ghost){e.x+=e.vx*dt;e.y+=e.vy*dt;return;}
   let nx=e.x+e.vx*dt;
-  if(e.vx!==0){const dir=e.vx>0?1:-1;const edge=dir>0?nx+e.w:nx;const tx=Math.floor(edge/TS);const ty0=Math.floor(e.y/TS),ty1=Math.floor((e.y+e.h-1)/TS);
+  if(e.vx!==0&&!e.ghost){const dir=e.vx>0?1:-1;const edge=dir>0?nx+e.w:nx;const tx=Math.floor(edge/TS);const ty0=Math.floor(e.y/TS),ty1=Math.floor((e.y+e.h-1)/TS);
     for(let ty=ty0;ty<=ty1;ty++){if(tileAt(tx,ty)==='#'){nx=dir>0?tx*TS-e.w:(tx+1)*TS;e.hitWall=dir;e.vx=0;break;}}}
   e.x=nx;
   let ny=e.y+e.vy*dt;
@@ -1005,28 +1004,28 @@ function updatePlayer(dt){
     else p.vx*=Math.pow(0.05,dt);
     if(!attacking&&p.kb<=0){if(aimFace)p.face=aimFace;else if(mouse.active)p.face=mdx>=0?1:-1;else if(ax!==0)p.face=ax>0?1:-1;}
     p.ghost=p.invisT>0;
-    if(p.ghost){const vv=(held('down')?1:0)-((held('up')||held('jump'))?1:0);p.vy=vv*230;p.onGround=false;p.onWall=0;p.jumps=0;}
-    else p.vy+=1800*dt;
+    p.vy+=1800*dt;
     const pushing=(inL&&p.onWall===-1)||(inR&&p.onWall===1);
     if(!p.onGround&&pushing&&p.vy>0&&!attacking){p.vy=Math.min(p.vy,110);}
     if(p.vy>760)p.vy=760;
-    if(p.jbuf>0&&p.kb<=0&&p.rageT<=0&&!p.ghost){
+    if(p.jbuf>0&&p.kb<=0&&p.rageT<=0){
       const onPlat=p.onGround&&standingOnPlatform(p);
       if(held('down')&&onPlat){p.dropThrough=0.25;p.jbuf=0;p.onGround=false;}
       else if(p.onGround||p.coyote>0){p.vy=-560;p.jbuf=0;p.coyote=0;p.jumpCut=true;sfx('jump');}
       else if(p.wallT>0){const d=p.wallDir;p.vx=-d*330;p.vy=-540;p.face=-d;p.wallLock=0.16;p.jbuf=0;p.wallT=0;p.jumpCut=true;p.jumps=1;p.canDash=true;sfx('walljump');}
       else if(p.jumps>0){p.jumps--;p.vy=-500;p.jbuf=0;p.jumpCut=true;sfx('djump');}
     }
-    if(p.jumpCut&&!p.ghost&&p.vy<0&&!held('jump')){p.vy*=0.45;p.jumpCut=false;}
+    if(p.jumpCut&&p.vy<0&&!held('jump')){p.vy*=0.45;p.jumpCut=false;}
     if(p.vy>=0)p.jumpCut=false;
   }
   if(Math.abs(p.vx)>20&&(p.onGround||p.ghost))p.runPh+=dt*Math.abs(p.vx)*0.06;
-  else if(p.ghost&&Math.abs(p.vy)>20)p.runPh+=dt*Math.abs(p.vy)*0.05;
   if(p.onGround&&Math.abs(p.vx)>60&&p.dashT<=0&&p.dodgeT<=0){p.stepT-=dt;if(p.stepT<=0){sfx('step');p.stepT=0.26*250/Math.abs(p.vx);}}else p.stepT=0.05;
 
   p.wasGround=p.onGround;const pvy=p.vy;
+  if(p.ghost&&tilesIn(p,'#')){p.vy=0;p.jbuf=0;p.jumps=0;}   // inside rock you keep your height: walk through, don't climb
   moveEntity(p,dt);
-  p.onWall=wallCheck(p);
+  if(p.ghost&&tilesIn(p,'#'))p.onGround=true;
+  p.onWall=p.ghost?0:wallCheck(p);
   if(p.onWall!==0&&!p.onGround){p.wallT=0.1;p.wallDir=p.onWall;}
   if(p.onGround){
     p.coyote=0.1;p.jumps=hasSkill('skylegs')?2:1;p.canDash=true;p.groundT+=dt;
@@ -1828,7 +1827,6 @@ function heroPose(){
   if(p.throwT>0)return 'throw';
   if(p.slam)return 'slam';
   if(p.atkT>0){if(p.atkKind==='upper')return 'upper';if(p.atkKind==='punch2')return 'haymaker';return 'punch';}
-  if(p.invisT>0&&!p.onGround)return (Math.abs(p.vx)>20||Math.abs(p.vy)>20)?'run':'idle';   // drifting as a ghost, not tumbling through a jump arc
   const sliding=!p.onGround&&p.onWall!==0&&p.vy>0;
   if(sliding)return 'slide';
   if(!p.onGround)return 'jump';
@@ -2188,6 +2186,7 @@ function updateMap(){const n=FTL().length;
   if(mapPage===1){updateItems();return;}
   if(mapPage===2){updateSkills();return;}
   if(mapPage===3){if(just('map')||just('pause')){state='play';return;}if(player.lvPending>0)updateLevelUp();return;}
+  if(!npc.mapGiven){if(just('map')||just('pause'))state='play';return;}
   if(realm!=='main'&&mouse.active){for(let i=0;i<n;i++){const r=skyListRect(i);if(mouse.x>=r.x&&mouse.x<=r.x+r.w&&mouse.y>=r.y&&mouse.y<=r.y+r.h){mapSel=i;if(pressed.Mouse0){travelTo(i);return;}}}}
   else if(mouse.active){for(let i=0;i<n;i++){const q=mapPointPos(FTL()[i]);if(Math.hypot(mouse.x-q.x,mouse.y-q.y)<16){mapSel=i;if(pressed.Mouse0){travelTo(i);return;}}}}
   if(just('left')||just('up'))mapSel=(mapSel+n-1)%n;if(just('right')||just('down'))mapSel=(mapSel+1)%n;
@@ -2220,6 +2219,7 @@ function drawMap(){
   if(mapPage===1){drawItems();return;}
   if(mapPage===2){drawSkills();return;}
   if(mapPage===3){drawPerkPage();return;}
+  if(!npc.mapGiven){ctx.textAlign='center';ctx.font='16px Georgia';ctx.fillStyle='#8d93a8';ctx.fillText('You have no map yet. The Old Miner in Driftfall keeps one.',W/2,H/2);ctx.font='12px Georgia';ctx.fillText('E / Q to switch pages, Tab to close',W/2,H-16);return;}
   if(realm==='sky'){drawSkyMap();return;}if(realm==='deep'){drawDeepMap();return;}
   const y0=H/2+58;const sx=x=>34+(x/MAIN_W)*(W-68);
   ctx.fillStyle='#1d2030';ctx.fillRect(sx(0),y0-150,sx(140)-sx(0),176);ctx.fillStyle='#3f6b38';ctx.fillRect(sx(140),y0-8,sx(274)-sx(140),34);ctx.fillStyle='#6b4a3a';ctx.fillRect(sx(276),y0-8,sx(EX(638))-sx(276),34);ctx.fillStyle='#2b2e44';ctx.fillRect(sx(274),y0-150,sx(276)-sx(274),160);ctx.fillStyle='#4a3a30';ctx.fillRect(sx(276),y0-64,sx(296)-sx(276),56);
@@ -2381,7 +2381,7 @@ function step(dt){
   if(MENU_STATES.has(state)){if(state==='settings')updateSettings();else if(state==='name')updateName();else if(state==='binds'&&bindWait){}else updateMenu();clearPressed();return;}
   if(state==='levelup'){updateLevelUp();clearPressed();return;}
   if(state==='play'&&just('pause')){state='pause';menuSel=0;clearPressed();return;}
-  if(state==='play'&&just('map')&&npc.mapGiven){state='map';clearPressed();return;}
+  if(state==='play'&&just('map')){if(!npc.mapGiven&&mapPage===0)mapPage=player.lvPending>0?3:1;state='map';clearPressed();return;}
   if(state==='talk'){dialog.blink+=dt;updateTalk();clearPressed();return;}
   if(hitstop>0){hitstop-=dt;return;}
   if(player.lvPending>0&&!player.dead&&state==='play'&&pressed.KeyL){lvSel=0;mapPage=3;state='map';sfx('menu');clearPressed();return;}
