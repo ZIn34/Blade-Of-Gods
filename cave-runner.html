@@ -1147,7 +1147,7 @@ function updateWaystones(){const R=realm==='sky'?SKY:realm==='deep'?DEEP:null;if
 function updateTraps(dt){const p=player;updateRespawns(dt);updateWaystones();updateAbilities(dt);updateGods();updateSaga(dt);
   if(realm==='inside'){updateInside(dt);return;}
   if(realm==='main'){const dr=doorNear();if(dr&&p.onGround&&just('interact')&&p.atkT<=0&&p.dashT<=0&&p.dodgeT<=0&&state==='play'){enterInside(dr);return;}}
-  updateTutorial(dt);updateSideFolk(dt);updateSkyGates();
+  updateTutorial(dt);updateSideFolk(dt);updateSideFinds();updateSkyGates();
   if(p.wardT>0)for(const e of enemies){if(!e.dead&&e.t==='ward'&&e.el==='ice'&&aabb({x:e.x-10,y:e.y-10,w:e.w+20,h:e.h+20},p))breakWard(e);}
   if((updraftHere()||descentHere())&&p.onGround&&just('interact')&&p.atkT<=0){enterRealm(realm==='sky'?'main':'sky');return;}
   if(realm==='main'&&quest.i>=4&&p.x+p.w/2>112*TS&&p.x+p.w/2<114*TS&&p.y>41*TS){enterRealm('deep');return;}
@@ -1541,28 +1541,52 @@ function drawTutorial(){if(!tutOn())return;
 const sideKills={};const sideState={};
 const FOLK={ok:false,n:5};(function(){const im=new Image();im.onload=()=>{FOLK.img=im;FOLK.fw=im.width/FOLK.n;FOLK.fh=im.height;FOLK.ok=true;};im.src='sprites/folk.png'+ASSET_VER;})();
 const SIDEQ=[
-  {id:'tam',spr:1,at:110,name:'Tam',t:'bat',need:6,xp:260,pot:{health:2},
-   offer:['Mother says I am not to go near the cave mouth any more. The wings come out at dusk.','Six of them, sir. Then I can go back to the good fishing spot.'],
-   nag:['Six. I would count them myself but I am not allowed out.'],
-   done:['Six! I watched the last one drop from the wall.','Here. I took these from the cupboard. Do not tell her.']},
-  {id:'ilsa',spr:2,at:110,name:'Mother Ilsa',t:'brute',need:5,xp:700,pot:{fury:1,health:1},
-   offer:['Frostwell buries somebody every time the big ones come down off the ice.','Five, and I will stop keeping a spade by the door.'],
-   nag:['Five of the big ones. Not four, and do not tell me four is close.'],
-   done:['Five. The ground can stay shut a while.','Drink that one when something bigger than you is laughing. It burns. It works.']},
-  {id:'corin',spr:3,at:110,name:'Corin',t:'brute',need:12,xp:1600,pot:{health:3},
-   offer:['My father kept the forge lit through worse than this and I will not be the one who lets it go out.','A dozen of them off the ash road and the cutters will come back to work.'],
-   nag:['A dozen. I am still hearing them at night.'],
-   done:['A dozen, and the wall still standing. My father would have said nothing and meant it kindly.','Take the potions. I have no coin and you would not take it anyway.']},
-  {id:'aldous',spr:4,at:110,name:'Brother Aldous',t:'stonegolem',need:3,xp:4000,pot:{shadow:1,health:2},
-   offer:['The quarry walks at night, and what walks is the quarry itself.','Three of them, sir knight. I have said the words over this place and the words are not enough.'],
-   nag:['Three of the stone ones. They do not bleed, so do not stand there waiting for it.'],
-   done:['Three. The dust settled and the cutters saw it from the road.','This one hides a man. I do not ask how and neither should you. Drink it where the ground goes thin.']}];
+  {id:'tam',spr:1,at:110,name:'Tam',item:'father\u2019s knife',itemShort:'KNIFE',col:'#dfe6ff',need:1,xp:320,pot:{health:2},
+   spots:()=>[[168,49]],
+   offer:['I dropped my father\u2019s knife down the shaft by the road. The one just past the cave camp.','There is a pocket under it, and the pocket is full of bugs. I heard them. Please get it back before he notices.'],
+   nag:['The shaft by the road, past the cave camp. It fell right to the bottom.'],
+   done:['That is it! That is his knife!','Here. I took these from the cupboard. Do not tell anyone.']},
+  {id:'ilsa',spr:2,at:110,name:'Mother Ilsa',item:'frost lily',items:'frost lilies',itemShort:'FROST LILY',itemsShort:'FROST LILIES',col:'#bfe6ff',need:3,xp:900,pot:{fury:1,health:1},
+   spots:()=>[1,5,9].map(k=>ISLES[k]?[ISLES[k].x0+(ISLES[k].w>>1),ISLES[k].y-1]:null).filter(Boolean),
+   offer:['The children in Frostwell have the cough again, and the only thing that breaks it is frost lily.','It grows only up on the cloud isles, where the air is thin and cold. Three flowers, sir. The steps rise from the plateau.'],
+   nag:['Up on the cloud isles. Look for the pale blue ones, they shine a little.'],
+   done:['Three. That is enough for every child on the street.','Drink this before something bigger than you is laughing. It burns. It works.']},
+  {id:'corin',spr:3,at:110,name:'Corin',item:'forge hammer',itemShort:'HAMMER',col:'#ffb060',need:1,xp:1800,pot:{health:3},
+   spots:()=>[[EX(410)+3,49]],
+   offer:['A thief took my father\u2019s hammer and ran for the shaft on the ash road. He went down. He did not come up.','The hammer is still down there, in the pocket under the road. So is whatever got him.'],
+   nag:['The shaft on the ash road. Whatever is down there is still down there.'],
+   done:['That is the one. You can feel where his hand wore the grip.','Take the potions. I have no coin, and you would not take it anyway.']},
+  {id:'aldous',spr:4,at:110,name:'Brother Aldous',item:'prayer stone',items:'prayer stones',itemShort:'PRAYER STONE',itemsShort:'PRAYER STONES',col:'#e8d9a0',need:4,xp:4500,pot:{shadow:1,health:2},
+   spots:()=>{const out=[];const x0=EX(520),x1=EX(612);for(let x=x0;x<x1&&out.length<4;x++){if(map[33]&&map[33][x]==='#'&&map[32][x]!=='#'&&map[32][x+1]!=='#'&&(!out.length||x-out[out.length-1][0]>20))out.push([x+1,32]);}return out;},
+   offer:['The old cutters left a prayer stone on every ledge along the quarry road, so the mountain would forgive them.','Four of them are left up there. Bring them down before the golems grind them to sand.'],
+   nag:['On the high ledges over the quarry road. You will have to climb.'],
+   done:['All four. The mountain will be quieter tonight.','This one hides a man. I do not ask how. Drink it where the ground goes thin.']}];
 function sideVillage(i){return i===0?VILLAGE:HAMLETS[i-1];}
 
 function sideFolk(){return SIDEQ.map((q,i)=>({q,x:sideVillage(i).x0+q.at,y:OUT2.y1,name:q.name,face:1,spr:q.spr}));}
 let SIDEFOLK=[];
-function buildSideFolk(){SIDEFOLK=sideFolk();for(const q of SIDEQ)if(!sideState[q.id])sideState[q.id]={s:'none',base:0};}
-const sideCount=q=>Math.max(0,(sideKills[q.t]||0)-(sideState[q.id].base||0));
+function buildSideFolk(){SIDEFOLK=sideFolk();for(const q of SIDEQ){if(!sideState[q.id])sideState[q.id]={s:'none',got:[]};if(!sideState[q.id].got)sideState[q.id].got=[];}}
+const sideCount=q=>Math.min(q.need,(sideState[q.id].got||[]).length);
+function updateSideFinds(){if(realm!=='main')return;const p=player;
+  for(const q of SIDEQ){const st=sideState[q.id];if(!st||st.s!=='active')continue;
+    q.spots().forEach((sp,k)=>{if(st.got.includes(k))return;
+      const ix=sp[0]*TS+16,iy=(sp[1]+1)*TS;
+      if(Math.abs(p.x+p.w/2-ix)<26&&Math.abs(p.y+p.h-iy)<40){st.got.push(k);sfx('quest');
+        burst(ix,iy-14,20,q.col,160,0.6,3,-80);ring(ix,iy-14,40,'rgba(255,240,200,0.9)',0.4);
+        const n=sideCount(q);
+        popups.push({x:ix,y:iy-40,text:q.itemShort+(q.need>1?'  '+n+'/'+q.need:'')+(n>=q.need?'  -  take it to '+q.name.toUpperCase():''),life:2.4,color:q.col,size:15});
+        saveGame(true);}});}}
+function drawSideFinds(){if(realm!=='main')return;
+  for(const q of SIDEQ){const st=sideState[q.id];if(!st||st.s!=='active')continue;
+    q.spots().forEach((sp,k)=>{if(st.got.includes(k))return;
+      const x=sp[0]*TS+16-cam.x,y=(sp[1]+1)*TS-cam.y-10+Math.sin(time*2.5+k)*3;if(x<-40||x>W+40||y<-40||y>H+40)return;
+      ctx.fillStyle='rgba(255,240,200,'+(0.10+0.06*Math.sin(time*4+k))+')';pxDisc(x,y,18);
+      ctx.fillStyle=q.col;
+      if(q.id==='tam'){pxRect(x-9,y-2,14,3);ctx.fillStyle='#6b4a2c';pxRect(x+5,y-3,6,5);}
+      else if(q.id==='ilsa'){pxRect(x-2,y-2,4,10);pxRect(x-6,y-6,4,4);pxRect(x+2,y-6,4,4);pxRect(x-2,y-9,4,4);ctx.fillStyle='#ffffff';pxRect(x-1,y-5,2,2);}
+      else if(q.id==='corin'){ctx.fillStyle='#6b4a2c';pxRect(x-1,y-6,3,14);ctx.fillStyle='#9aa0ae';pxRect(x-7,y-9,14,6);}
+      else{pxRect(x-6,y-6,12,10);ctx.fillStyle='rgba(120,90,40,0.8)';pxRect(x-2,y-4,4,6);pxRect(x-4,y-2,8,2);}
+      if(Math.random()<0.08)part(cam.x+x+rnd(-8,8),cam.y+y-6,rnd(-10,10),rnd(-40,-15),0.8,q.col,2,-20);});}}
 function sideProgress(kind){for(const q of SIDEQ){const st=sideState[q.id];if(!st||st.s!=='active'||q.t!==kind)continue;
   const n=sideCount(q);
   if(n===q.need){popups.push({x:player.x+player.w/2,y:player.y-46,text:q.name.toUpperCase()+': DONE  -  GO BACK',life:2.6,color:'#ffe08a',size:15});sfx('quest');}
@@ -1571,9 +1595,9 @@ function sideNear(){if(realm!=='main')return null;const px=player.x+player.w/2,p
   for(const f of SIDEFOLK)if(Math.abs(px-(f.x+12))<78&&Math.abs(py-f.y)<70)return f;return null;}
 function talkSide(f){const q=f.q,st=sideState[q.id],p=player;f.face=(p.x>f.x)?1:-1;
   if(st.s==='done'){openDialog(['That business is settled. You have my thanks, and this village has its evenings back.'],null,q.name);return;}
-  if(st.s==='none'){openDialog(q.offer.concat(['Will you do it?']),()=>{st.s='active';st.base=sideKills[q.t]||0;
-      popups.push({x:p.x+p.w/2,y:p.y-40,text:'SIDE JOB TAKEN  -  '+q.need+' '+q.t.toUpperCase(),life:2.6,color:'#ffe08a',size:15});sfx('quest');saveGame(true);},q.name);return;}
-  if(sideCount(q)<q.need){openDialog(q.nag.concat([sideCount(q)+' of '+q.need+' so far.']),null,q.name);return;}
+  if(st.s==='none'){openDialog(q.offer.concat(['Will you do it?']),()=>{st.s='active';st.got=[];
+      popups.push({x:p.x+p.w/2,y:p.y-40,text:'SIDE JOB  -  FIND '+(q.need>1?q.need+' '+q.itemsShort:'THE '+q.itemShort),life:2.6,color:'#ffe08a',size:15});sfx('quest');saveGame(true);},q.name);return;}
+  if(sideCount(q)<q.need){openDialog(q.nag.concat(q.need>1?[sideCount(q)+' of '+q.need+' so far.']:[]),null,q.name);return;}
   openDialog(q.done,()=>{st.s='done';gainXP(q.xp,p.x+p.w/2,p.y);
     for(const k in q.pot){p.potions[k]=(p.potions[k]||0)+q.pot[k];popups.push({x:p.x+p.w/2,y:p.y-70,text:'+'+q.pot[k]+' '+k.toUpperCase()+' POTION',life:2.4,color:'#9df29d',size:15});}
     sfx('levelup');ring(p.x+p.w/2,p.y+p.h/2,90,'rgba(255,224,138,0.9)',0.6);saveGame(true);},q.name);}
@@ -1592,7 +1616,7 @@ function drawSideFolk(){if(realm!=='main')return;
       const by=y-(f.sit?54:92)+Math.sin(time*2+f.x)*3;pxRect(x-3,by,6,16);pxRect(x-3,by+20,6,6);}
     if(f.talk&&state==='play'){ctx.font='12px Georgia';ctx.textAlign='center';ctx.fillStyle='rgba(255,224,138,0.95)';
       ctx.fillText((pad.connected?'d-pad up: ':'E: ')+(st.s==='active'?'speak to '+f.name:'a job from '+f.name),x,y-(f.sit?66:100));}}}
-function sideJobText(){for(const q of SIDEQ){const st=sideState[q.id];if(st&&st.s==='active')return q.name+': '+Math.min(q.need,sideCount(q))+'/'+q.need+' '+q.t;}return null;}
+function sideJobText(){for(const q of SIDEQ){const st=sideState[q.id];if(st&&st.s==='active')return sideCount(q)>=q.need?q.name+': bring the '+(q.need>1?q.items:q.item)+' back':q.name+': find the '+(q.need>1?q.items+' '+sideCount(q)+'/'+q.need:q.item);}return null;}
 /* ---------- the cloud stair is barred at every boss ---------- */
 function skyGates(){return realm==='sky'?SKY.tiers.filter(t=>t.boss&&t.id&&t.gx1!==undefined&&!deadSpawns.has(t.id)):[];}
 function openSkyGate(id){if(realm!=='sky')return;const t=SKY.tiers.find(q=>q.id===id&&q.gx1!==undefined);if(!t)return;
@@ -2327,7 +2351,7 @@ function draw(){
   if(showTitle)drawTitleScene();else{
   drawBackgroundLow();drawCaveGlow();drawMotes();
   ctx.save();if(shake>0&&settings.shake)ctx.translate(rnd(-shake,shake),rnd(-shake,shake));
-  drawOutside();drawTiles();drawSkyGates();drawInsideDecor();drawTutorial();drawSideFolk();drawNpc();drawCorpses();for(const e of enemies)if(!e.dead){drawEnemy(e);drawStun(e);drawPoise(e);}for(const e of enemies)if(!e.dead)drawTelegraph(e);drawStones();drawLoot();drawKing();drawPrincess();drawTraps();if(state!=='menu'&&state!=='controls')drawPlayer();drawParryTell();drawDaggers();drawParts();
+  drawOutside();drawTiles();drawSkyGates();drawInsideDecor();drawTutorial();drawSideFinds();drawSideFolk();drawNpc();drawCorpses();for(const e of enemies)if(!e.dead){drawEnemy(e);drawStun(e);drawPoise(e);}for(const e of enemies)if(!e.dead)drawTelegraph(e);drawStones();drawLoot();drawKing();drawPrincess();drawTraps();if(state!=='menu'&&state!=='controls')drawPlayer();drawParryTell();drawDaggers();drawParts();
   ctx.restore();
   drawLight();}
   if(MENU_STATES.has(state)){if(state==='pause')drawHUD();if(state==='controls')drawControls();else if(state==='settings')drawSettings();else if(state==='slots')drawSlots();else if(state==='name')drawName();else if(state==='binds')drawBinds();else drawMenu();}else drawHUD();
