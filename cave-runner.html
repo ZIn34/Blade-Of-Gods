@@ -56,6 +56,9 @@ function pollPad(){
   const dz=0.25,sn=settings.sens||1,lx=clamp((gp.axes[0]||0)*sn,-1,1),ly=clamp((gp.axes[1]||0)*sn,-1,1),rx=clamp((gp.axes[2]||0)*sn,-1,1),ry=clamp((gp.axes[3]||0)*sn,-1,1);
   pad.moveX=Math.abs(lx)>dz?Math.sign(lx)*Math.min(1,(Math.abs(lx)-dz)/(0.9-dz)):0;
   set('StickLeft',lx<-dz);set('StickRight',lx>dz);set('StickUp',ly<-0.6);set('StickDown',ly>0.6);
+  if(bindWait){const all=[...Object.values(PADBTN),'StickLeft','StickRight','StickUp','StickDown'];
+    if(!bindArmed&&!all.some(c=>keys[c]))bindArmed=true;            // wait for the button that opened this row to come up
+    if(bindArmed){const hit=all.find(c=>pressed[c]);if(hit){captureBind(hit);for(const c of all)pressed[c]=false;}}}
   const m=Math.hypot(rx,ry);
   if(m>0.5){pad.aimX=rx/m;pad.aimY=ry/m;if(!pad.aimActive)used=true;pad.aimActive=true;}else pad.aimActive=false;
   if(used)mouse.active=false;
@@ -129,15 +132,25 @@ function startMusic(){initMusic();if(!music.on||music.started)return;const pr=mu
 function toggleMusic(){initMusic();music.on=!music.on;try{localStorage.setItem('caverunner.music',music.on?'on':'off');}catch(e){}if(music.on){music.started=false;startMusic();}else{music.el.pause();music.started=false;}popups.push({x:player.x+player.w/2,y:player.y-20,text:music.on?'MUSIC ON':'MUSIC OFF',life:1,color:'#9ad8ff',size:16});}
 
 /* ---------- settings ---------- */
-const settings={musicVol:0.45,sfxVol:1,shake:true,hints:true,sens:1,binds:{}};
+const settings={musicVol:0.45,sfxVol:1,shake:true,hints:true,sens:1,binds:{},padBinds:{}};
 try{Object.assign(settings,JSON.parse(localStorage.getItem('caverunner.settings')||'{}'));}catch(e){}
+if(!settings.padBinds)settings.padBinds={};
+const isPadCode=c=>/^(Pad|Stick)/.test(c);
 function saveSettings(){try{localStorage.setItem('caverunner.settings',JSON.stringify(settings));}catch(e){}}
-function applySettings(){SFX_VOL=settings.sfxVol;if(music.el)music.el.volume=settings.musicVol;if(typeof DEFAULT_BIND!=='undefined')for(const a in DEFAULT_BIND)BIND[a]=DEFAULT_BIND[a].slice();for(const a in settings.binds){if(BIND[a]){const c=settings.binds[a];BIND[a]=[c,...DEFAULT_BIND[a].filter(q=>q.startsWith('Pad')||q.startsWith('Stick'))];}}}
+function applySettings(){SFX_VOL=settings.sfxVol;if(music.el)music.el.volume=settings.musicVol;
+  if(typeof DEFAULT_BIND==='undefined')return;
+  for(const a in DEFAULT_BIND){
+    let list=DEFAULT_BIND[a].slice();
+    const k=settings.binds&&settings.binds[a],g=settings.padBinds&&settings.padBinds[a];
+    if(k)list=[k,...list.filter(isPadCode)];
+    if(g)list=[...list.filter(c=>!isPadCode(c)),g];
+    BIND[a]=list;}}
 const DEFAULT_BIND={};for(const a in BIND)DEFAULT_BIND[a]=BIND[a].slice();
 const REBIND=[['jump','Jump'],['attack','Attack'],['dodge','Dodge roll'],['dash','Charge'],['throw','Throw dagger'],['vanish','Vanish'],['rage','Rage smash'],['interact','Talk / use'],['map','Map / items'],['pause','Pause']];
-let bindWait=null;
+let bindWait=null,bindArmed=false;
+function padName(c){const M={PadA:'A',PadB:'B',PadX:'X',PadY:'Y',PadLB:'LB',PadRB:'RB',PadLT:'LT',PadRT:'RT',PadBack:'Back',PadStart:'Start',PadUp:'D-up',PadDown:'D-down',PadLeft:'D-left',PadRight:'D-right',StickUp:'S-up',StickDown:'S-down',StickLeft:'S-left',StickRight:'S-right'};return M[c]||c;}
 function keyName(c){if(!c)return '-';if(c.startsWith('Key'))return c.slice(3);if(c.startsWith('Digit'))return c.slice(5);if(c.startsWith('Arrow'))return c.slice(5)+' arrow';const M={Mouse0:'Left click',Mouse1:'Middle click',Mouse2:'Right click',ShiftLeft:'Shift',ShiftRight:'Right shift',ControlLeft:'Ctrl',ControlRight:'Right ctrl',AltLeft:'Alt',Escape:'Esc',Space:'Space',Tab:'Tab',Enter:'Enter',Backquote:'`',Minus:'-',Equal:'=',BracketLeft:'[',BracketRight:']',Semicolon:';',Quote:"'",Comma:',',Period:'.',Slash:'/',Backslash:'\\',CapsLock:'Caps'};return M[c]||c;}
-function setBind(a,c){settings.binds[a]=c;applySettings();saveSettings();}
+function setBind(a,c){(isPadCode(c)?settings.padBinds:settings.binds)[a]=c;applySettings();saveSettings();}
 function captureBind(c){if(!bindWait)return false;if(c==='Escape'){bindWait=null;sfx('menu');return true;}if(c==='Tab')return true;setBind(bindWait,c);bindWait=null;sfx('confirm');return true;}
 applySettings();
 
@@ -2149,8 +2162,8 @@ function menuPick(name){sfx('confirm');
   else if(name==='Controls'){prevMenuState=state;state='controls';menuSel=0;}
   else if(name==='Settings'){prevMenuState=state;state='settings';menuSel=0;}
   else if(name==='Back'){if(state==='binds'){state='settings';menuSel=0;return;}state=prevMenuState;menuSel=0;}
-  else if(name==='Reset to defaults'){settings.binds={};applySettings();saveSettings();}
-  else if(state==='binds'){const r=REBIND.find(q=>q[1]===name);if(r){bindWait=r[0];}}
+  else if(name==='Reset to defaults'){settings.binds={};settings.padBinds={};applySettings();saveSettings();}
+  else if(state==='binds'){const r=REBIND.find(q=>q[1]===name);if(r){bindWait=r[0];bindArmed=false;}}
   else if(name==='Resume'){state='play';}
   else if(name==='Save'){const ok=saveGame();state='play';popups.push({x:player.x+player.w/2,y:player.y-30,text:ok?'GAME SAVED':'NO SAVING IN A BOSS FIGHT',life:1.6,color:ok?'#9df29d':'#ff9a8a',size:15});}
   else if(name==='Save and quit'){if(!saveGame()){state='play';popups.push({x:player.x+player.w/2,y:player.y-30,text:'NO SAVING IN A BOSS FIGHT',life:1.6,color:'#ff9a8a',size:15});return;}location.reload();}
@@ -2175,13 +2188,16 @@ function updateSettings(){const n=SETTING_ROWS.length;
   if(just('pause')){state=prevMenuState;menuSel=0;}
 }
 function drawBinds(){ctx.fillStyle='rgba(3,4,10,0.88)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#e9ebf3';ctx.font='26px Georgia';ctx.fillText('KEY BINDINGS',W/2,40);
-  ctx.font='12px Georgia';ctx.fillStyle='#8d93a8';ctx.fillText('movement stays on arrows / WASD. Controller buttons are fixed.',W/2,58);
+  ctx.font='12px Georgia';ctx.fillStyle='#8d93a8';ctx.fillText('movement stays on arrows / WASD and the left stick. Everything else takes a key, a mouse button or a pad button.',W/2,58);
   const items=menuItems();items.forEach((it,i)=>{const r=itemRect(i);const sel=i===menuSel;const rb=REBIND.find(q=>q[1]===it);const waiting=rb&&bindWait===rb[0];
     ctx.fillStyle=waiting?'rgba(70,40,30,0.95)':sel?'rgba(60,50,30,0.95)':'rgba(20,22,32,0.85)';ctx.beginPath();ctx.roundRect(r.x,r.y,r.w,r.h,6);ctx.fill();ctx.lineWidth=sel?2.5:1.2;ctx.strokeStyle=waiting?'#ff9a8a':sel?'#ffe08a':'#4a4f66';ctx.stroke();
     ctx.font='bold 13px Georgia';ctx.fillStyle=sel?'#ffe08a':'#e8eaf2';
-    if(rb){ctx.textAlign='left';ctx.fillText(it,r.x+14,r.y+18);ctx.textAlign='right';ctx.fillStyle=waiting?'#ff9a8a':'#c8ccd8';ctx.fillText(waiting?'press a key or mouse button...':BIND[rb[0]].filter(c=>!c.startsWith('Pad')&&!c.startsWith('Stick')).map(keyName).join(' / '),r.x+r.w-14,r.y+18);}
+    if(rb){ctx.textAlign='left';ctx.fillText(it,r.x+14,r.y+18);ctx.textAlign='right';ctx.fillStyle=waiting?'#ff9a8a':'#c8ccd8';const kb=BIND[rb[0]].filter(c=>!isPadCode(c)).map(keyName).join(' / ')||'-';
+      const gp=BIND[rb[0]].filter(isPadCode).map(padName).join(' / ')||'-';
+      if(waiting)ctx.fillText('press a key, mouse or pad button...',r.x+r.w-14,r.y+18);
+      else{ctx.fillText(kb,r.x+r.w-96,r.y+18);ctx.fillStyle='#8fb4d8';ctx.fillText(gp,r.x+r.w-14,r.y+18);}}
     else{ctx.textAlign='center';ctx.fillText(it,r.x+r.w/2,r.y+18);}});
-  ctx.textAlign='center';ctx.fillStyle='#8d93a8';ctx.font='12px Georgia';ctx.fillText(bindWait?'Esc cancels':'Enter or click a row to rebind it, Esc to go back',W/2,H-16);}
+  ctx.textAlign='center';ctx.fillStyle='#8d93a8';ctx.font='12px Georgia';ctx.fillText(bindWait?'Esc cancels':'Enter, A or click a row to rebind it   -   keys in white, pad in blue   -   Esc to go back',W/2,H-16);}
 function drawSettings(){
   ctx.fillStyle='rgba(3,4,10,0.85)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#e9ebf3';ctx.font='28px Georgia';ctx.fillText('SETTINGS',W/2,54);
   SETTING_ROWS.forEach((row,i)=>{const r=itemRect(i);const sel=i===menuSel;ctx.fillStyle=sel?'rgba(60,50,30,0.95)':'rgba(20,22,32,0.85)';ctx.beginPath();ctx.roundRect(r.x,r.y,r.w,r.h,8);ctx.fill();ctx.lineWidth=sel?3:1.5;ctx.strokeStyle=sel?'#ffe08a':'#4a4f66';ctx.stroke();
