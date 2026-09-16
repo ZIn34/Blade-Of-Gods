@@ -882,7 +882,7 @@ let deathInLair=false,deathInHole=false;
 function tooStrongTalk(){const p=player;npc.mapGiven=true;p.x=VILLAGE.npcX-70;p.y=38*TS-p.h;p.vx=0;p.vy=0;snapCam();npc.face=(p.x>npc.x)?1:-1;openDialog(['You are alive. Barely. I dragged you back here myself.','They are too strong for you as you are now. That is not shame, Sir Thraine, it is arithmetic.','Take this map. I have marked places with plenty of monsters. Go, fight, level up. Come back stronger and then try again.','And Sir Thraine: some nests are too thick to cut through. Your father\'s trick, the vanishing, is for those. Slip past, find the rope, and let the mountain do the killing.','Press Tab to open the map. I would say level forty or so before you go back out there. The road east and the cloud isles pay best, and hurt most.'],()=>{popups.push({x:p.x+p.w/2,y:p.y-30,text:'MAP UNLOCKED - PRESS TAB',life:2.5,color:'#ffe08a',size:16});sfx('quest');saveGame();});}
 function loadLastSave(){
   if(deathInHole){try{localStorage.setItem('caverunner.pending','thief');}catch(e){}}else if(deathInLair&&npc.atVillage&&!npc.mapGiven){try{localStorage.setItem('caverunner.pending','toostrong');}catch(e){}}
-  if(slotInfo(saveSlot)){try{sessionStorage.setItem('cr_boot','continue');}catch(e){}location.reload();}
+  if(slotInfo(saveSlot)){BOOT.set('continue');location.reload();}
   else{respawnPlayer();state='play';}   // nothing saved in this slot yet: start it over rather than loading another knight
 }
 function updateGameOver(){if(just('confirm')||pressed.Mouse0||just('interact'))loadLastSave();else if(just('pause'))location.reload();}
@@ -2069,6 +2069,12 @@ function updateLevelUp(){
 }
 
 /* ---------- save / load ---------- */
+const BOOT={set(v){try{sessionStorage.setItem('cr_boot',v);return;}catch(e){}try{localStorage.setItem('cr_boot',v);return;}catch(e){}try{window.name='cr_boot:'+v;}catch(e){}},
+  take(){let v=null;try{v=sessionStorage.getItem('cr_boot');sessionStorage.removeItem('cr_boot');}catch(e){}
+    if(!v){try{v=localStorage.getItem('cr_boot');localStorage.removeItem('cr_boot');}catch(e){}}
+    if(!v){try{if(String(window.name).startsWith('cr_boot:')){v=window.name.slice(8);window.name='';}}catch(e){}}
+    return v;}};
+let worldTouched=false;   // once a run has been played the world must be rebuilt by a reload
 const SLOTS=3;let saveSlot=0,saveName='Thraine';const slotKey=i=>'caverunner.save'+(i+1);
 try{const old=localStorage.getItem('caverunner.save');if(old&&!localStorage.getItem(slotKey(0))){localStorage.setItem(slotKey(0),old);}if(old)localStorage.removeItem('caverunner.save');saveSlot=clamp(parseInt(localStorage.getItem('caverunner.slot')||'0')||0,0,SLOTS-1);}catch(e){}
 function slotInfo(i){try{const d=JSON.parse(localStorage.getItem(slotKey(i)));if(!d)return null;return {name:d.name||'Thraine',level:d.player.level,time:d.time||0,realm:d.realm||'main',stones:(d.stones||[]).length};}catch(e){return null;}}
@@ -2248,11 +2254,11 @@ function updateMenu(){const items=menuItems(),n=items.length;menuSel=Math.min(me
   if(just('pause')){if(state==='controls'||state==='slots')menuPick('Back');else if(state==='pause')menuPick('Resume');}
 }
 function menuPick(name){sfx('confirm');
-  if(name==='Continue'){const i=latestSlot();if(i<0)return;setSlot(i);sessionStorage.setItem('cr_boot','continue');location.reload();}
+  if(name==='Continue'){const i=latestSlot();if(i<0)return;setSlot(i);BOOT.set('continue');location.reload();}
   else if(name==='New game'){slotMode='new';prevMenuState=state;state='slots';menuSel=0;}
   else if(name==='Load game'){slotMode='load';prevMenuState=state;state='slots';menuSel=latestSlot()>=0?latestSlot():0;}
   else if(/^Slot \d$/.test(name)){const i=parseInt(name.slice(5))-1;const f=slotInfo(i);
-    if(slotMode==='load'){if(!f){sfx('clang');return;}setSlot(i);sessionStorage.setItem('cr_boot','continue');location.reload();}
+    if(slotMode==='load'){if(!f){sfx('clang');return;}setSlot(i);BOOT.set('continue');location.reload();}
     else{nameSlot=i;nameBuf=f?f.name:'';state='name';}}
   else if(name==='Controls'){prevMenuState=state;state='controls';menuSel=0;}
   else if(name==='Settings'){prevMenuState=state;state='settings';menuSel=0;}
@@ -2301,7 +2307,13 @@ function drawSettings(){
     else{ctx.textAlign='left';ctx.fillText(row[0],r.x+16,r.y+22);ctx.textAlign='right';ctx.fillText((sel&&/%/.test(val)?'\u25c4 ':'')+val+(sel&&/%/.test(val)?' \u25ba':''),r.x+r.w-16,r.y+22);}});
   ctx.textAlign='center';ctx.fillStyle='#8d93a8';ctx.font='12px Georgia';ctx.fillText(pad.connected?'d-pad to move and change, A to toggle, Back to leave':'arrows to move and change, Enter or click to toggle, Esc to leave',W/2,H-20);
 }
-function updateName(){if(pressed.Enter||pressed.NumpadEnter||pressed.PadA||pressed.PadStart){const nm=nameBuf.trim()||'Thraine';setSlot(nameSlot);try{localStorage.setItem('caverunner.newname',nm);}catch(e){}sessionStorage.setItem('cr_boot','new');sfx('confirm');location.reload();}
+function beginNewKnight(){const nm=nameBuf.trim()||'Thraine';setSlot(nameSlot);sfx('confirm');
+  if(!worldTouched){saveName=nm;try{localStorage.removeItem(slotKey(saveSlot));}catch(e){}state='play';fadeIn=0.6;worldTouched=true;saveGame(true);return;}
+  try{localStorage.setItem('caverunner.newname',nm);}catch(e){}BOOT.set('new:'+encodeURIComponent(nm));location.reload();}
+const nameBtn=k=>({x:W/2+(k?20:-150),y:H/2+62,w:130,h:36});
+function updateName(){
+  if(mouse.active&&pressed.Mouse0){for(const k of [0,1]){const r=nameBtn(k);if(mouse.x>=r.x&&mouse.x<=r.x+r.w&&mouse.y>=r.y&&mouse.y<=r.y+r.h){if(k)beginNewKnight();else{state='slots';sfx('menu');}return;}}}
+  if(pressed.Enter||pressed.NumpadEnter||pressed.PadA||pressed.PadStart){beginNewKnight();}
   else if(pressed.Escape||pressed.PadB){state='slots';sfx('menu');}}
 function nameKey(e){if(e.key==='Backspace'){nameBuf=nameBuf.slice(0,-1);e.preventDefault();}else if(e.key.length===1&&/[A-Za-z0-9 '\-]/.test(e.key)&&nameBuf.length<14)nameBuf+=e.key;}
 function drawSlots(){ctx.fillStyle='rgba(3,4,10,0.85)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#e9ebf3';ctx.font='28px Georgia';ctx.fillText(slotMode==='new'?'NEW GAME':'LOAD GAME',W/2,52);
@@ -2319,7 +2331,11 @@ function drawName(){ctx.fillStyle='rgba(3,4,10,0.85)';ctx.fillRect(0,0,W,H);ctx.
   const bw=320,bx=W/2-bw/2,by=H/2-24;ctx.fillStyle='rgba(20,22,32,0.95)';ctx.beginPath();ctx.roundRect(bx,by,bw,48,8);ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='#ffe08a';ctx.stroke();
   ctx.font='bold 22px Georgia';ctx.textAlign='left';ctx.fillStyle=nameBuf?'#ffffff':'#5a5f72';const txt=nameBuf||'Thraine';ctx.fillText(txt,bx+16,by+32);
   if(Math.floor(time*2)%2===0){const tw=ctx.measureText(nameBuf).width;ctx.fillStyle='#ffe08a';ctx.fillRect(bx+18+tw,by+12,3,26);}
-  ctx.textAlign='center';ctx.fillStyle='#8d93a8';ctx.font='12px Georgia';ctx.fillText('Enter: begin   -   Esc: back',W/2,H/2+52);}
+  for(const k of [0,1]){const r=nameBtn(k);const hot=mouse.active&&mouse.x>=r.x&&mouse.x<=r.x+r.w&&mouse.y>=r.y&&mouse.y<=r.y+r.h;
+    ctx.fillStyle=hot?'rgba(60,50,30,0.95)':'rgba(20,22,32,0.9)';ctx.beginPath();ctx.roundRect(r.x,r.y,r.w,r.h,8);ctx.fill();
+    ctx.lineWidth=hot||k?2.5:1.5;ctx.strokeStyle=k?'#ffe08a':'#4a4f66';ctx.stroke();
+    ctx.textAlign='center';ctx.font='bold 15px Georgia';ctx.fillStyle=k?'#ffe08a':'#c8ccd8';ctx.fillText(k?'Begin':'Back',r.x+r.w/2,r.y+23);}
+  ctx.textAlign='center';ctx.fillStyle='#8d93a8';ctx.font='12px Georgia';ctx.fillText('Enter: begin   -   Esc: back',W/2,H/2+118);}
 function drawMenuItems(){const items=menuItems();items.forEach((it,i)=>{const r=itemRect(i);const sel=i===menuSel;ctx.fillStyle=sel?'rgba(60,50,30,0.95)':'rgba(20,22,32,0.85)';ctx.beginPath();ctx.roundRect(r.x,r.y,r.w,r.h,8);ctx.fill();ctx.lineWidth=sel?3:1.5;ctx.strokeStyle=sel?'#ffe08a':'#4a4f66';ctx.stroke();ctx.textAlign='center';ctx.fillStyle=sel?'#ffe08a':'#e8eaf2';ctx.font='bold '+(r.h<40?18:22)+'px Georgia';ctx.fillText(it,r.x+r.w/2,r.y+r.h*0.68);});
   ctx.font='13px Georgia';ctx.fillStyle='#8d93a8';ctx.textAlign='center';ctx.fillText((pad.connected?'d-pad to choose, A to confirm':'arrows or mouse to choose, Enter or click to confirm')+'   -   M: music '+(music.on?'on':'off'),W/2,H-22);}
 /* the home page carries no scene: the title sits on the plain ground the frame already lays down */
@@ -2399,9 +2415,9 @@ setInterval(()=>{if(performance.now()-lastFrameAt>100)frame(performance.now());}
 buildSky();spawnsSky.length=0;stones.length=0;resetMap(MAIN_W,64,'#');buildLevel();spawnAll(true);
 player.x=4*TS+6;player.y=38*TS-player.h;player.safe={x:player.x,y:player.y};respawn={x:player.x,y:player.y};
 snapCam();
-{let boot=null;try{boot=sessionStorage.getItem('cr_boot');sessionStorage.removeItem('cr_boot');}catch(e){}
+{let boot=BOOT.take();if(boot)worldTouched=true;let bootName=null;if(boot&&boot.startsWith('new:')){try{bootName=decodeURIComponent(boot.slice(4));}catch(e){}boot='new';}
  if(boot==='continue'&&loadGame()){state='play';fadeIn=0.6;try{const pend=localStorage.getItem('caverunner.pending');if(pend==='toostrong'){localStorage.removeItem('caverunner.pending');if(npc.atVillage&&!npc.mapGiven)tooStrongTalk();}else if(pend==='thief'){localStorage.removeItem('caverunner.pending');if(realm!=='main')enterRealm('main');thiefTalk();}}catch(e){}}
- else if(boot==='new'){try{saveName=(localStorage.getItem('caverunner.newname')||'Thraine').trim()||'Thraine';localStorage.removeItem('caverunner.newname');localStorage.removeItem(slotKey(saveSlot));}catch(e){}state='play';fadeIn=0.6;saveGame(true);}
+ else if(boot==='new'){saveName=bootName||'Thraine';try{saveName=(bootName||localStorage.getItem('caverunner.newname')||'Thraine').trim()||'Thraine';localStorage.removeItem('caverunner.newname');localStorage.removeItem(slotKey(saveSlot));}catch(e){}state='play';fadeIn=0.6;saveGame(true);}
  else if(boot==='continue'){state='play';fadeIn=0.6;saveGame(true);}   // the slot was empty: begin it rather than loading another
  else{state='menu';menuCam();}}
 requestAnimationFrame(frame);
