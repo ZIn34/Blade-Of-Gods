@@ -1,4 +1,4 @@
-# Blade of Gods
+# Blade of Kings
 
 A 2D side-view action platformer that runs in a single HTML file. No build step, no
 dependencies: open `cave-runner.html` in a browser and play.
@@ -33,7 +33,7 @@ Open `cave-runner.html` (or serve the folder and open `index.html`).
 2. Kill the dragon blocking the road east.
 3. Take the four elemental stones from the giant, the ice dragon, the fire dragon and the
    stone golem. Each guardian needs its own strategy; steel alone does not work on any of them.
-4. Climb the cloud stair and ask the gods for the Blade of Gods. They send you after three
+4. Climb the cloud stair and ask the ancient kings of Driftfall for the Blade of Kings. They send you after three
    raiding dragons first, and then after the giant that steals the blade out from under them.
 5. Go down the pit in the deep hall, through a keep of rope-and-door puzzles, and end the mage.
 
