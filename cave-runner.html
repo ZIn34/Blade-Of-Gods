@@ -604,6 +604,7 @@ function moveEntity(e,dt){
   let ny=e.y+e.vy*dt;
   if(e.vy!==0){const dir=e.vy>0?1:-1;const edge=dir>0?ny+e.h:ny;const ty=Math.floor(edge/TS);const tx0=Math.floor(e.x/TS),tx1=Math.floor((e.x+e.w-1)/TS);
     for(let tx=tx0;tx<=tx1;tx++){const t=tileAt(tx,ty);
+      if(e.ghost&&t==='#'&&(dir>0?ty*TS<e.y+e.h-1:(ty+1)*TS>e.y+1))continue;
       if(t==='#'||(t==='-'&&dir>0&&!(e.dropThrough>0)&&e.y+e.h<=ty*TS+1)){
         if(dir>0){ny=ty*TS-e.h;e.onGround=true;}else{ny=(ty+1)*TS;e.hitCeil=true;}e.vy=0;break;}}}
   e.y=ny;
@@ -1023,9 +1024,7 @@ function updatePlayer(dt){
   if(p.onGround&&Math.abs(p.vx)>60&&p.dashT<=0&&p.dodgeT<=0){p.stepT-=dt;if(p.stepT<=0){sfx('step');p.stepT=0.26*250/Math.abs(p.vx);}}else p.stepT=0.05;
 
   p.wasGround=p.onGround;const pvy=p.vy;
-  if(p.ghost&&tilesIn(p,'#')){p.vy=0;p.jbuf=0;p.jumps=0;}   // inside rock you keep your height: walk through, don't climb
   moveEntity(p,dt);
-  if(p.ghost&&tilesIn(p,'#'))p.onGround=true;
   p.onWall=p.ghost?0:wallCheck(p);
   if(p.onWall!==0&&!p.onGround){p.wallT=0.1;p.wallDir=p.onWall;}
   if(p.onGround){
