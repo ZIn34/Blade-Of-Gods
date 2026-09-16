@@ -1341,6 +1341,8 @@ function mtnBand(canvas,x,zw,gy,hgt,base,par,alpha){const sc=hgt/MTN.h,bw=Math.m
   let off=((-cam.x*par)%bw+bw)%bw;ctx.globalAlpha=alpha;
   for(let bx=x-off-bw;bx<x+zw+bw;bx+=bw)ctx.drawImage(canvas,Math.round(bx),Math.round(gy-base-hgt),Math.ceil(bw)+1,Math.ceil(hgt));
   ctx.globalAlpha=1;}
+const CASTLE_IMG=new Image();CASTLE_IMG.onload=()=>{CASTLE_IMG.ok=true;};CASTLE_IMG.src='sprites/castle.png'+ASSET_VER;
+const CASTLE={dx:600,scale:3};   // drawn from village x0+dx, gate at the middle of the art
 const HOUSE_IMGS=[1,2].map(i=>{const im=new Image();im.onload=()=>{im.ok=true;};im.src='sprites/house'+i+'.png'+ASSET_VER;return im;});
 function drawCastle(bx,gy){
   const S1='#8b90a2',S2='#aeb3c4',S3='#6b7080',ROOF='#7d3b3b',ROOFL='#9c4c4c',DARK='#22242f',GOLD='#d9b24a';
@@ -1373,7 +1375,7 @@ const INSIDE={kind:null,seed:0,name:'',ret:{x:0,y:0},door:{x:0,y:0},folk:[]};
 const DOORS=[];
 const HALL_IMG=new Image();HALL_IMG.onload=()=>{HALL_IMG.ok=true;};HALL_IMG.src='sprites/hall.jpg'+ASSET_VER;
 function buildDoors(){DOORS.length=0;const gy=OUT2.y1;
-  DOORS.push({x:VILLAGE.x0+745,y:gy,kind:'castle',seed:0,name:'the keep'});}   // only the keep opens
+  DOORS.push({x:VILLAGE.x0+CASTLE.dx+80*CASTLE.scale,y:gy,kind:'castle',seed:0,name:'the keep'});}   // only the keep opens
 function doorNear(){if(realm!=='main')return null;const px=player.x+player.w/2,py=player.y+player.h;
   for(const d of DOORS)if(Math.abs(px-d.x)<40&&Math.abs(py-d.y)<72)return d;return null;}
 const exitNear=()=>realm==='inside'&&Math.abs(player.x+player.w/2-(INSIDE.door.x+player.w/2))<44;
@@ -1415,6 +1417,9 @@ function drawDoors(){if(realm!=='main')return;const near=doorNear();
       if(near===d&&state==='play'){ctx.font='12px Georgia';ctx.textAlign='center';ctx.fillStyle='rgba(255,224,138,0.95)';
         ctx.fillText(pad.connected?'d-pad up: go inside':'E: go inside',x,y-dh-18);}
       continue;}
+    ctx.fillStyle='rgba(255,196,110,'+(0.08+0.04*Math.sin(time*2+d.x))+')';pxDisc(x,y-dh/2,big?60:38);
+    if(near===d&&state==='play'){ctx.font='12px Georgia';ctx.textAlign='center';ctx.fillStyle='rgba(255,224,138,0.95)';ctx.fillText(pad.connected?'d-pad up: go inside':'E: go inside',x,y-dh-18);}
+    if(CASTLE_IMG.ok)continue;
     ctx.fillStyle='#120e10';pxRect(x-dw/2-4,y-dh-4,dw+8,dh+4);
     ctx.fillStyle=big?'#4a3324':'#3d2a1c';pxRect(x-dw/2,y-dh,dw,dh);
     ctx.fillStyle=big?'#5e412d':'#4d3624';for(let i=0;i<dw;i+=8)pxRect(x-dw/2+i,y-dh,4,dh);
@@ -1616,7 +1621,7 @@ function drawSkyGates(){if(realm!=='sky')return;
 function drawVillage(){
   const gy=OUT2.y1-cam.y;
   for(const v of [VILLAGE,...HAMLETS]){const x0=v.x0-cam.x,x1=v.x1-cam.x;if(x1<-200||x0>W+200)continue;
-    if(v===VILLAGE)drawCastle(x0+620,gy+6);
+    if(v===VILLAGE){if(CASTLE_IMG.ok){const cw=CASTLE_IMG.width*CASTLE.scale,ch=CASTLE_IMG.height*CASTLE.scale;ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(CASTLE_IMG,Math.round(x0+CASTLE.dx),Math.round(gy+6-ch),cw,ch);ctx.restore();}else drawCastle(x0+620,gy+6);}
     if(saga.purple&&!saga.coreDead){ctx.fillStyle='rgba(120,50,180,'+(0.20+Math.sin(time*1.5)*0.04)+')';ctx.fillRect(x0-60,gy-300,(x1-x0)+900,320);}
     [[150,0],[400,1]].forEach(([dx,i])=>{const im=HOUSE_IMGS[i];if(im&&im.ok){ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(im,x0+dx,gy+6-im.height,im.width,im.height);ctx.restore();}});
     if(v.name){ctx.font='bold 11px Georgia';ctx.textAlign='center';ctx.fillStyle='rgba(255,224,138,0.8)';ctx.fillText(v.name.toUpperCase(),(x0+x1)/2,gy-150);}}
