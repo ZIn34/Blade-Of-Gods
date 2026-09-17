@@ -331,6 +331,11 @@ function updateMage2(e,dt){const p=player;e.bob=(e.bob||0)+dt;e.dir=p.x+p.w/2<e.
   for(const c of e.crystals){c.ang+=dt*0.55;c.x=e.x+e.w/2-c.w/2+Math.cos(c.ang)*c.orbit;c.y=e.y+e.h/2-c.h/2+Math.sin(c.ang)*c.orbit*0.5;
     if(c.dead&&c.relight>0){c.relight-=dt;if(c.relight<=0){c.dead=false;c.hp=1;burst(c.x+c.w/2,c.y+c.h/2,16,STONES[c.el].color,160,0.6,3,0);popups.push({x:c.x,y:c.y-12,text:STONES[c.el].name.split(' ')[0]+' WARD RETURNS',life:1.4,color:STONES[c.el].color,size:13});}}}
   e.shield=e.crystals.some(c=>!c.dead);
+  if(e.shieldWas&&!e.shield&&!e.fallen){                // every ward broken: he reels for three seconds
+    e.stun=3;e.beamT=0;e.castFlash=0;e.vx=0;e.vy=0;shake=Math.max(shake,12);hitstop=Math.max(hitstop,0.12);sfx('stun');sfx('clang');
+    ring(e.x+e.w/2,e.y+e.h/2,130,'rgba(201,166,255,0.95)',0.6);burst(e.x+e.w/2,e.y+e.h/2,40,'#e9b6ff',280,0.8,4,0);
+    popups.push({x:e.x+e.w/2,y:e.y-34,text:'THE WARDS ARE DOWN. HE REELS',life:2.4,color:'#e9b6ff',size:19});}
+  e.shieldWas=e.shield;
   if(e.beamT>0){mageBeam(e,dt);return;}
   e.castFlash=Math.max(0,(e.castFlash||0)-dt);
   e.tpT=(e.tpT||3)-dt;
