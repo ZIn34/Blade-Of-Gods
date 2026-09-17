@@ -294,7 +294,7 @@ function updatePrincess(dt){const p=player;princess.talk=false;
 function freePrincess(){const p=player;princess.freed=true;princess.follow=true;princess.dir=1;if(princess.real){saga.realFreed=true;openDialog(['You came back. I heard him laughing up there, and then I heard him stop.','I am the real one. He kept me under his own floor, where nobody would think to dig.','Take me to my father. Please.'],()=>{popups.push({x:p.x+p.w/2,y:p.y-40,text:'THE TRUE PRINCESS FOLLOWS YOU',life:3,color:'#ffe08a',size:18});sfx('quest');saveGame(true);},'The Princess');return;}
   openDialog(['Sir Thraine... it is you. Father said he would send a knight. I did not think he would send the one they whisper about.','He kept me down here so the dark would do the work for him. It nearly did.','Take me home. Please. I have to see my father.'],()=>{popups.push({x:p.x+p.w/2,y:p.y-40,text:'SHE FOLLOWS YOU NOW',life:2.6,color:'#ffe08a',size:18});sfx('quest');saveGame(true);},'The Princess');}
 function mageFall(e,dt){const p=player;e.vy=(e.vy||0)+1600*dt;if(e.vy>700)e.vy=700;e.vx=0;moveEntity(e,dt);
-  if(e.onGround){e.fallT=(e.fallT||0)+dt;
+  e.fallT=(e.fallT||0)+dt*(e.onGround?1:0.5);{
     if(e.fallT>0.7&&!e.spoke){e.spoke=true;
       const gone=()=>{burst(e.x+e.w/2,e.y+e.h/2,60,'#c9a6ff',260,1.2,3,-30);ring(e.x+e.w/2,e.y+e.h/2,150,'rgba(201,166,255,0.9)',0.8);sfx('bigdie');shake=14;
         e.dead=true;saga.mage2=true;princess.real=true;princess.freed=false;princess.hidden=false;gainXP(e.xp||60000,e.x+e.w/2,e.y);
@@ -698,13 +698,14 @@ function drawAltar(){if(realm!=='sky')return;const x=SKY.summit.x-cam.x,y1=SKY.s
   if(!collectedStones.has('blade')&&state==='play'){ctx.font='12px Georgia';ctx.textAlign='center';ctx.fillStyle='rgba(255,246,200,0.9)';
     ctx.fillText(near?(wardenDead()||gods.asked?(pad.connected?'d-pad up: speak to the ancient kings':'E: speak to the ancient kings'):'the warden must fall first'):'the ancient kings',x,y1-70);}}
 function hitEnemy(e,dmg,dir,kb){const rawDmg=dmg;
+  if(e.fallen)return;                                  // a beaten boss who still has something to say cannot be hit again
   if(e.t==='ward'){if((e.el==='fire'&&player.flameT>0)||(e.el==='earth'&&quakeHit)||(e.el==='storm'&&boltHit))breakWard(e);else{e.flash=0.08;sfx('clang');if(!e.hint||time-e.hint>2){e.hint=time;popups.push({x:e.x+e.w/2,y:e.y-14,text:'THE WARD IGNORES STEEL',life:1.2,color:'#b9bfd0',size:13});}}return;}
   if(e.t==='mage'){if(e.mirror){e.dead=true;burst(e.x+e.w/2,e.y+e.h/2,24,'#c9a6ff',200,0.6,3,0);sfx('clang');relightWards(1);popups.push({x:e.x+e.w/2,y:e.y-14,text:'A MIRROR. A WARD RELIGHTS',life:1.4,color:'#c9a6ff',size:14});return;}if(e.shield){e.flash=0.06;sfx('clang');if(!e.hint||time-e.hint>2){e.hint=time;popups.push({x:e.x+e.w/2,y:e.y-14,text:'SHIELDED WHILE THE WARDS BURN',life:1.4,color:'#c9a6ff',size:14});}return;}e.capHit=true;}
   dmg=dmg*dmgMult()*(player.flameT>0?1.5:1)*(collectedStones.has('blade')&&e.t==='mage'?2:1);let armored=false;const ambush=!burning&&(player.ambush||player.invisT>0);if(player.flameT>0&&!burning&&e.breath!=='fire')e.burnT=3;if(ambush){player.ambush=false;dmg*=2;popups.push({x:e.x+e.w/2,y:e.y-26,text:'AMBUSH',life:0.9,color:'#9ad8ff',size:16});sfx('perfect');}
   if(e.armor){if(e.stun>0)dmg*=3;else if(e.state==='recover'){if(!e.openHint){e.openHint=true;popups.push({x:e.x+e.w/2,y:e.y-14,text:'OPEN AFTER IT ATTACKS',life:1.6,color:'#9df29d',size:15});}}else if(ambush&&e.stealthWeak){dmg*=1.5;e.stun=Math.max(e.stun,(1.4)*STUN_K);e.flash=0.1;e.vx=0;if(e.fam){e.state='idle';e.st=0;}popups.push({x:e.x+e.w/2,y:e.y-14,text:'IT NEVER SAW IT COMING',life:1.2,color:'#9ad8ff',size:16});sfx('stun');}else{dmg*=(e.armorMul||0.25);armored=true;}}
   if(armored){e.hp-=dmg;e.flash=0.06;const cx=e.x+e.w/2,cy=e.y+e.h*0.45;popups.push({x:cx+rnd(-10,10),y:e.y-6,text:'CLANG',life:0.7,color:'#dfe6ff',size:18});for(let i=0;i<6;i++){const a=rnd(-1,1)+(dir>0?0:Math.PI);part(cx,cy,Math.cos(a)*rnd(120,300),Math.sin(a)*rnd(120,300)-100,rnd(0.15,0.35),'#dfe6ff',2,600);}sfx('clang');shake=Math.max(shake,2);
     if(!e.hintShown){e.hintShown=true;popups.push({x:player.x+player.w/2,y:player.y-34,text:e.armorHint||'IT SHRUGS OFF THE BLOW',life:1.8,color:'#b9bfd0',size:15});}
-    if(e.hp<=0&&e.noKill&&!e.fallen){e.hp=1;e.fallen=true;e.shield=false;e.beamT=0;for(const c of (e.crystals||[]))c.dead=true;}
+    if(e.hp<=0&&e.noKill&&!e.fallen){e.hp=1;e.fallen=true;e.stun=0;e.burnT=0;e.shield=false;e.beamT=0;for(const c of (e.crystals||[]))c.dead=true;}
     else if(e.hp<=0){e.dead=true;player.kills++;if(e.spawnId){deadSpawns.add(e.spawnId);if(!e.label&&!e.horde)respawnAt[e.spawnId]=time+RESPAWN_T;}gainXP(e.xp||XP_VALUE[e.t]||10,cx,cy);if(e.label)dropPotion(cx,cy,'health');else if(Math.random()<0.2)dropPotion(cx,cy);questEvent(e.t,e);if(e.raid)questEvent('raid',null);if(e.stone)spawnStone(e.stone,cx,e.y+e.h-24);if(e.thief)spawnStone('stolenblade',cx,e.y+e.h-24);if(e.t==='core'){saga.coreDead=true;saga.purple=false;shake=20;sfx('bigdie');rumble(600,1,1);for(let i=0;i<90;i++)part(cx+rnd(-60,60),cy+rnd(-60,60),rnd(-180,180),rnd(-220,60),rnd(0.8,1.8),'#c9a6ff',3,200);popups.push({x:cx,y:cy-40,text:'THE PURPLE DRAINS AWAY',life:4,color:'#9df29d',size:20});saveGame(true);}if(e.t==='mage'&&!e.mirror&&!e.mage2){for(const q of enemies)if(q.t==='ward'||q.mirror)q.dead=true;gameWon=true;deepCellOpen=true;if(realm==='deep')carve(137,DEEP.floor-34,2,34,'.');shake=16;sfx('quest');popups.push({x:player.x+player.w/2,y:player.y-46,text:'A LOCK FALLS OPEN SOMEWHERE BEHIND THE THRONE',life:3.4,color:'#ffe08a',size:16});saveGame(true);}if(e.spawnId==='dragon@268,37'){if(DEMO)demoEnd();else openBarrier();}if(e.spawnId)openSkyGate(e.spawnId);burst(cx,cy,40,'#ff8a5a',320,0.9,4,300);ring(cx,cy,110,'rgba(255,200,120,0.9)',0.6);sfx('kill');sfx('bigdie');shake=14;hitstop=0.16;}
     return;}
   if(!burning){if(hasSkill('vampire')){player.vampN=(player.vampN||0)+1;if(player.vampN>=5){player.vampN=0;if(player.hp<player.maxHp){player.hp++;popups.push({x:player.x+player.w/2,y:player.y-24,text:'+1',life:0.7,color:'#ff6a6a',size:14});}}}if(hasSkill('quickdraw'))player.rage=Math.min(100,player.rage+3);}
@@ -733,7 +734,7 @@ function hitEnemy(e,dmg,dir,kb){const rawDmg=dmg;
   const cx=e.x+e.w/2,cy=e.y+e.h/2;
   for(let i=0;i<8;i++){const a=rnd(-0.7,0.7)+(dir>0?0:Math.PI);part(cx,cy,Math.cos(a)*rnd(80,280),Math.sin(a)*rnd(80,280)-80,rnd(0.2,0.45),'#ffd27a',rnd(2,4),500);}
   sfx(dmg>=2?'heavy':'hit');shake=Math.max(shake,dmg>=2?6:3);rumble(dmg>=2?110:60,dmg>=2?0.6:0.25,dmg>=2?0.4:0.3);hitstop=Math.max(hitstop,dmg>=2?0.07:0.04);
-  if(e.hp<=0&&e.noKill&&!e.fallen){e.hp=1;e.fallen=true;e.shield=false;e.beamT=0;e.vx=0;e.vy=0;for(const c of (e.crystals||[]))c.dead=true;for(const q of enemies)if(q.mirror)q.dead=true;shake=14;hitstop=0.2;sfx('bigdie');return;}
+  if(e.hp<=0&&e.noKill&&!e.fallen){e.hp=1;e.fallen=true;e.stun=0;e.burnT=0;e.shield=false;e.beamT=0;e.vx=0;e.vy=0;for(const c of (e.crystals||[]))c.dead=true;for(const q of enemies)if(q.mirror)q.dead=true;shake=14;hitstop=0.2;sfx('bigdie');return;}
   if(e.hp<=0){
     e.dead=true;player.kills++;if(e.spawnId){deadSpawns.add(e.spawnId);if(!e.label&&!e.horde)respawnAt[e.spawnId]=time+RESPAWN_T;}gainXP(e.xp||XP_VALUE[e.t]||10,cx,cy);if(e.label)dropPotion(cx,cy,'health');else if(Math.random()<0.2)dropPotion(cx,cy);questEvent(e.t,e);if(e.raid)questEvent('raid',null);if(e.road)questEvent('road',e);if(e.stone)spawnStone(e.stone,cx,e.y+e.h-24);if(e.thief)spawnStone('stolenblade',cx,e.y+e.h-24);if(e.t==='core'){saga.coreDead=true;saga.purple=false;shake=20;sfx('bigdie');rumble(600,1,1);for(let i=0;i<90;i++)part(cx+rnd(-60,60),cy+rnd(-60,60),rnd(-180,180),rnd(-220,60),rnd(0.8,1.8),'#c9a6ff',3,200);popups.push({x:cx,y:cy-40,text:'THE PURPLE DRAINS AWAY',life:4,color:'#9df29d',size:20});saveGame(true);}if(e.t==='mage'&&!e.mirror&&!e.mage2){for(const q of enemies)if(q.t==='ward'||q.mirror)q.dead=true;gameWon=true;deepCellOpen=true;if(realm==='deep')carve(137,DEEP.floor-34,2,34,'.');shake=16;sfx('quest');popups.push({x:player.x+player.w/2,y:player.y-46,text:'A LOCK FALLS OPEN SOMEWHERE BEHIND THE THRONE',life:3.4,color:'#ffe08a',size:16});saveGame(true);}if(e.spawnId==='dragon@268,37'){if(DEMO)demoEnd();else openBarrier();}if(e.spawnId)openSkyGate(e.spawnId);if(sheetFor(e.t)&&sheetFor(e.t).anims.death)corpses.push({t:e.t,x:e.x,y:e.y,w:e.w,h:e.h,dir:e.dir,age:0,dur:e.t==='mage'?1.9:(e.fam?0.9:0.6)});
     burst(cx,cy,heavy?36:20,heavy?'#8fa07a':'#c97a45',heavy?300:220,0.7,4,300);burst(cx,cy,10,'#ffffff',120,0.3,2,0);
@@ -791,6 +792,7 @@ function updateEnemies(dt){
   const p=player,pcx=p.x+p.w/2,pcy=p.y+p.h/2;
   for(const e of enemies){
     if(e.dead)continue;
+    if(e.fallen&&e.mage2){e.flash-=dt;e.stun=0;mageFall(e,dt);continue;}   // beaten: he only falls and talks
     e.flash-=dt;e.kbT-=dt;e.st-=dt;e.stun-=dt;e.atkCd=(e.atkCd||0)-dt;e.comboWin=(e.comboWin||0)-dt;
     e.stagger=Math.max(0,(e.stagger||0)-dt);
     if(e.poise>0&&e.kbT<=0)e.poise=Math.max(0,e.poise-dt*1.1);
@@ -799,7 +801,7 @@ function updateEnemies(dt){
       popups.push({x:e.x+e.w/2,y:e.y-20,text:'SLAMMED',life:1,color:'#dfe6ff',size:18});
       sfx('crash');shake=Math.max(shake,9);hitstop=Math.max(hitstop,0.06);
       for(let k=0;k<12;k++)part(e.x+e.w/2,e.y+e.h/2,rnd(-160,160),rnd(-220,60),0.4,'#dfe6ff',3,400);
-      if(e.hp<=0&&!e.noKill){hitEnemy(e,0.01,e.hitWall,{kx:0,ky:0});}}
+      if(e.hp<=0){hitEnemy(e,0.01,e.hitWall,{kx:0,ky:0});}}
     e.slamT=Math.max(0,(e.slamT||0)-dt);
     if(e.burnT>0){e.burnT-=dt;e.burnTick=(e.burnTick||0)-dt;if(Math.random()<0.5)part(e.x+rnd(0,e.w),e.y+rnd(0,e.h),rnd(-20,20),rnd(-120,-40),0.4,Math.random()<0.5?'#ff9a3a':'#ffd24a',3,-150);if(e.burnTick<=0){e.burnTick=0.6;burnTick(e);if(e.dead)continue;}}
     if(e.stun>0){
