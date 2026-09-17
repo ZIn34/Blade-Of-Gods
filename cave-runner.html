@@ -377,11 +377,12 @@ function spawnCore(){if(realm!=='main'||!saga.home||saga.coreDead)return;if(enem
   for(const e of enemies)if(!e.dead&&e.t!=='core'&&e.x>230*TS&&e.x<274*TS&&e.y>40*TS){e.dead=true;if(e.spawnId){deadSpawns.add(e.spawnId);respawnAt[e.spawnId]=time+1e9;}}
   const c=makeEnemy('core',252,50);c.spawnId='core';if(!deadSpawns.has('core'))enemies.push(c);}
 function startReveal(){saga.revealed=true;princess.follow=false;princess.hidden=true;
+  {const bx=princess.x+princess.w/2,by=princess.y+princess.h/2;burst(bx,by,50,'#a86ad8',260,1,4,-60);ring(bx,by,120,'rgba(201,166,255,0.9)',0.6);shake=10;sfx('stun');}
   openDialog(['HAH! You really thought that I was the princess?','And that little fight you had was nothing more than one of my clones.','And now you have brought me to the heart of the kingdom!'],()=>{
     saga.purple=true;shake=18;sfx('roar');rumble(500,1,1);
     for(let i=0;i<70;i++)part(player.x+rnd(-300,300),player.y+rnd(-160,80),rnd(-90,90),rnd(-140,-20),rnd(1,2),'#a86ad8',3,-40);
     popups.push({x:player.x+player.w/2,y:player.y-56,text:'THE PURPLE TAKES THE TOWN',life:3.4,color:'#c9a6ff',size:18});
-    spawnMage2();
+    if(realm==='main')spawnMage2();
     setTimeout(()=>openDialog(['Oh no. Oh no, what do we do!','The purple has taken the town, my people, my own hands!','Sir Thraine, you are all we have. Can you fight him?'],()=>{saveGame(true);},'The King'),700);
   },'The Mage');}
 function startHome(){saga.home=true;princess.follow=false;princess.atCourt=true;princess.x=king.x-86;princess.y=HALL.floor*TS-princess.h;princess.dir=1;
@@ -390,12 +391,12 @@ function talkToKing(){king.face=(player.x>king.x)?1:-1;
   if(saga.ended){openDialog(['Walk where you like, Sir Thraine. Every door in this kingdom is yours.'],null,'The King');return;}
   if(saga.coreDead){openDialog(['Wow. You really are a champion.','Thank you for all you have done, Sir Thraine.','Go and rest. The kingdom will still be here in the morning, and so will we.'],()=>{saga.ended=true;gameWon=true;popups.push({x:player.x+player.w/2,y:player.y-50,text:'THE KINGDOM IS FREE',life:5,color:'#ffe08a',size:24});sfx('levelup');saveGame(true);},'The King');return;}
   if(saga.home){openDialog(['The purple is still on everything. Find what feeds it, I beg you.','My miner says the old shafts under the village were never this colour.'],null,'The King');return;}
+  if(!saga.revealed&&princess.follow&&!princess.real){openDialog(['My daughter! Sir Thraine, you found her. You brought her home to me.','Come here, child. Let me look at you.'],()=>startReveal(),'The King');return;}
   if(saga.realFreed&&princess.follow){startHome();return;}
   if(saga.mage2){openDialog(['You killed him? Then where is my daughter?','He said she was below where you fought his clone. Go, Sir Thraine. Go now.'],null,'The King');return;}
   if(saga.revealed){openDialog(['He is out there, east of the village, laughing at us.','End him, Sir Thraine.'],null,'The King');return;}
   openDialog(['You are the knight the miner speaks of.','Bring my daughter home and this throne will remember it.'],null,'The King');}
 function updateSaga(dt){const p=player;
-  if(realm==='main'&&!saga.revealed&&princess.follow&&!princess.real&&inVillage())startReveal();
   if(saga.realFreed&&!saga.home&&princess.follow&&kingNear())startHome();
   if(saga.purple&&realm==='main'&&inVillage()&&Math.random()<0.25)part(cam.x+rnd(0,W),cam.y+rnd(0,H),rnd(-12,12),rnd(-30,-8),rnd(1,2),'rgba(168,106,216,0.45)',2,0);
   if(kingNear()&&p.onGround&&just('interact')&&p.atkT<=0&&p.dashT<=0&&p.dodgeT<=0){p.vx=0;talkToKing();}}
@@ -573,7 +574,7 @@ function sagaText(){
   if(saga.realFreed)return princess.follow?'Bring the princess to the throne hall':'Find the princess below the keep';
   if(saga.mage2)return 'The princess lies below where you fought the clone';
   if(saga.revealed)return 'The mage waits east of Driftfall. End him';
-  if(princess.follow)return 'Take her home to Driftfall';
+  if(princess.follow)return 'Take her to the king in the keep';
   return null;}
 function questProgressText(){const st=sagaText();if(st)return st;const q=questCurrent();if(!npc.met)return null;if(npc.moving)return 'Meet the Old Miner at Driftfall';if(!q)return 'The tower awaits';if(quest.stage==='offer')return 'Talk to the '+npc.name;if(questComplete())return 'Return to the '+npc.name;const k=Object.keys(q.need)[0];if(k==='princess'&&quest.stage==='active'){if(princess.freed)return 'Take her home to the '+npc.name;if(gameWon)return 'The mage is dead. Find the princess';if(realm==='deep')return player.y>(DEEP.floor-30)*TS?'The keep: find what opens the doors':'Descend to the mage\'s keep';return 'Go down the pit in the deep hall';}if(k==='blade'&&quest.stage==='active'){if(!gods.asked)return 'Climb the cloud stair and ask the ancient kings';const r=killsOutside.raid||0;if(r<3)return 'Raiding dragons slain '+r+'/3';if(!gods.stolen)return 'Return to the summit for the blade';if(!collectedStones.has('stolenblade'))return 'Find the giant\'s hole and take back the blade';return 'Bring the blade back to the kings';}if(k==='stones'&&npc.mapGiven&&player.level<TRAIN_LV)return 'Train: level '+player.level+'/'+TRAIN_LV+'  -  stones '+collectedStones.size+'/4';return q.label+' '+Math.min(q.need[k],questCount(k))+'/'+q.need[k];}
 function openDialog(lines,onClose,speaker){dialog.open=true;dialog.lines=lines;dialog.i=0;dialog.onClose=onClose;dialog.speaker=speaker||npc.name;state='talk';sfx('dialog');}
