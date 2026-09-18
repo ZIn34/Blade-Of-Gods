@@ -473,15 +473,15 @@ function buildLevel(){
   for(let x=300;x<EX(632);x+=13){if(BOSS_X.some(b=>Math.abs(x-b)<10)||FT.some(f=>f.y===37&&Math.abs(f.x-(x+1))<4)||HAMLETS.some(h=>x*TS>=h.x0-3*TS&&x*TS<=h.x1))continue;
     if(SHAFTS.some(h=>x<h+3&&x+3>h-1))continue;                 // never roof a shaft
     carve(x,36,3,2,'#');if(!SHAFTS.some(h=>x+6<h+3&&x+10>h-1))carve(x+6,33,4,1,'#');}
-  // side caves: a shaft from the surface drops into a pocket; wall-jump the shaft to get back out
-  carve(158,38,2,6);carve(150,44,22,6);carve(154,47,3,1,'#');carve(165,46,3,1,'#');
-  carve(191,38,2,6);carve(180,44,24,6);carve(184,47,3,1,'#');carve(197,46,3,1,'#');
-  carve(233,38,2,6);carve(222,44,22,7);carve(226,48,3,1,'#');carve(238,47,3,1,'#');
+  // side caves: a shaft from the surface drops into a pocket; a step right beside the shaft, then wall-jump out
+  carve(158,38,2,6);carve(150,44,22,6);carve(154,47,3,1,'#');carve(165,46,3,1,'#');carve(160,46,3,1,'#');
+  carve(191,38,2,6);carve(180,44,24,6);carve(184,47,3,1,'#');carve(197,46,3,1,'#');carve(193,46,3,1,'#');
+  carve(233,38,2,6);carve(222,44,22,7);carve(226,48,3,1,'#');carve(238,47,3,1,'#');carve(235,47,3,1,'#');
   carve(25,12,2,3);carve(16,15,16,5);carve(19,17,3,1,'#');
   for(const h of SHAFTS)carve(h,34,2,4);                       // clear the mouth of anything the road laid over it
-  carve(EX(341),38,2,6);carve(EX(330),44,24,6);carve(EX(334),47,3,1,'#');carve(EX(348),46,3,1,'#');
-  carve(EX(420),38,2,6);carve(EX(410),44,24,6);carve(EX(414),47,3,1,'#');carve(EX(427),46,3,1,'#');
-  carve(EX(500),38,2,6);carve(EX(490),44,24,6);carve(EX(494),47,3,1,'#');carve(EX(507),46,3,1,'#');
+  // the stretched road moved the shafts, so the steps are placed from each shaft, not from the old map
+  for(const [sh,pk] of [[EX(341),EX(330)],[EX(420),EX(410)],[EX(500),EX(490)]]){carve(sh,38,2,6);carve(pk,44,24,6);
+    carve(sh-8,47,3,1,'#');carve(sh+4<=pk+23?sh+2:sh-5,46,3,1,'#');}
   // rolling ground along the road
   carve(186,36,5,2,'#');carve(202,36,6,2,'#');carve(204,35,2,1,'#');carve(218,37,4,1,'#');carve(226,36,4,2,'#');
   // enemies
