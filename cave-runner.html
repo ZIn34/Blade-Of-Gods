@@ -258,7 +258,9 @@ function relightWards(n){const dead=enemies.filter(q=>q.dead&&q.t==='ward');for(
 function updateMage(e,dt){const p=player;e.shield=enemies.some(q=>!q.dead&&q.t==='ward');e.bob=(e.bob||0)+dt;e.vx=0;e.vy=0;
   if(e.mirror){e.life-=dt;e.castFlash=Math.max(0,(e.castFlash||0)-dt);e.castT=(e.castT||2)-dt;if(e.castT<=0){e.castT=3.4;e.castFlash=0.6;bolts.push({x:p.x+p.w/2+rnd(-40,40),t:0,life:1.4,src:e});}if(e.life<=0){e.dead=true;burst(e.x+e.w/2,e.y+e.h/2,12,'#c9a6ff',120,0.5,2,0);}return;}
   e.wardT=(e.wardT||35)-dt;if(e.wardT<=0){e.wardT=35;if(enemies.some(q=>q.dead&&q.t==='ward')){relightWards(1);popups.push({x:e.x+e.w/2,y:e.y-20,text:'A WARD RELIGHTS',life:1.8,color:'#c9a6ff',size:15});sfx('stun');}}
-  e.tpT=(e.tpT||3)-dt;if(e.tpT<=0){e.tpT=3+Math.random()*1.5;const pl=DEEP.plats[Math.floor(Math.random()*DEEP.plats.length)];const ox=e.x+e.w/2,oy=e.y+e.h/2;ring(ox,oy,90,'rgba(201,166,255,0.9)',0.45);burst(ox,oy,22,'#c9a6ff',260,0.6,3,0);if(!p.dead&&p.inv<=0&&!evading()&&Math.hypot(p.x+p.w/2-ox,p.y+p.h/2-oy)<86)hurtPlayer(e,10);e.x=(pl.x+3)*TS-e.w/2;e.y=pl.y*TS-e.h;burst(e.x+e.w/2,e.y+e.h/2,16,'#c9a6ff',160,0.5,3,0);sfx('stun');}
+  e.tpT=(e.tpT||3)-dt;if(e.tpT<=0&&!(e.tpWarn>0)){e.tpWarn=0.8;e.tpT=99;sfx('stun');}
+  if(e.tpWarn>0){e.tpWarn-=dt;if(e.tpWarn<=0){e.tpWarn=0;e.tpT=0;}}
+  if(e.tpT<=0){e.tpT=3+Math.random()*1.5;const pl=DEEP.plats[Math.floor(Math.random()*DEEP.plats.length)];const ox=e.x+e.w/2,oy=e.y+e.h/2;ring(ox,oy,90,'rgba(201,166,255,0.9)',0.45);burst(ox,oy,22,'#c9a6ff',260,0.6,3,0);if(!p.dead&&p.inv<=0&&!evading()&&Math.hypot(p.x+p.w/2-ox,p.y+p.h/2-oy)<86)hurtPlayer(e,10);e.x=(pl.x+3)*TS-e.w/2;e.y=pl.y*TS-e.h;burst(e.x+e.w/2,e.y+e.h/2,16,'#c9a6ff',160,0.5,3,0);sfx('stun');}
   e.castT=(e.castT||2)-dt;e.castFlash=Math.max(0,(e.castFlash||0)-dt);const dist=Math.hypot(p.x-e.x,p.y-e.y);if(e.castT<=0&&dist<900){e.castT=e.shield?2.4:1.5;e.castFlash=0.8;const n=(e.phase||0)>=2?3:1;for(let i=0;i<n;i++)bolts.push({x:p.x+p.w/2+(i-(n-1)/2)*96,t:-i*0.12,life:1.5,src:e});sfx('roar');}
   const k=e.hp/e.maxHp;const ph=k<=0.25?3:k<=0.5?2:k<=0.75?1:0;if(ph>(e.phase||0)){e.phase=ph;relightWards(4);e.wardT=35;for(let m=0;m<3;m++){const mm=makeEnemy('mage',DEEP.plats[m].x+3,DEEP.plats[m].y-1);Object.assign(mm,{mirror:true,life:14,hp:1,maxHp:1,label:'THE MAGE',fly:true,noTouch:true,outside:false});mm.x=(DEEP.plats[m%DEEP.plats.length].x+3)*TS-mm.w/2;mm.y=DEEP.plats[m%DEEP.plats.length].y*TS-mm.h;mm.castT=1.4+m*0.5;mm.spawnId='mirror';enemies.push(mm);}popups.push({x:e.x+e.w/2,y:e.y-20,text:'THE MAGE SPLITS. THE WARDS RELIGHT',life:2.2,color:'#c9a6ff',size:16});sfx('roar');e.tpT=0.1;}}
 function princessVisible(){return princess.follow||(realm==='deep'&&!princess.hidden)||(inCourt()&&princess.atCourt);}
@@ -338,13 +340,14 @@ function updateMage2(e,dt){const p=player;e.bob=(e.bob||0)+dt;e.dir=p.x+p.w/2<e.
   e.shieldWas=e.shield;
   if(e.beamT>0){mageBeam(e,dt);return;}
   e.castFlash=Math.max(0,(e.castFlash||0)-dt);
-  e.tpT=(e.tpT||3)-dt;
+  e.tpT=(e.tpT||3)-dt;if(e.tpT<=0&&!(e.tpWarn>0)){e.tpWarn=0.8;e.tpT=99;sfx('stun');}
+  if(e.tpWarn>0){e.tpWarn-=dt;if(e.tpWarn<=0){e.tpWarn=0;e.tpT=0;}}
   if(e.tpT<=0){e.tpT=3.4+Math.random()*1.6;const pl=e.plats[Math.floor(Math.random()*e.plats.length)];const ox=e.x+e.w/2,oy=e.y+e.h/2;
     ring(ox,oy,90,'rgba(201,166,255,0.9)',0.45);burst(ox,oy,22,'#c9a6ff',260,0.6,3,0);
     if(!p.dead&&p.inv<=0&&!evading()&&Math.hypot(p.x+p.w/2-ox,p.y+p.h/2-oy)<86)hurtPlayer(e,12);
     e.x=(pl.x+2)*TS-e.w/2;e.y=pl.y*TS-e.h;burst(e.x+e.w/2,e.y+e.h/2,18,'#c9a6ff',200,0.5,3,0);sfx('stun');}
   e.beamCd=(e.beamCd===undefined?6:e.beamCd)-dt;
-  if(e.beamCd<=0&&Math.abs(p.y-e.y)<180){e.beamDur=2.1;e.beamT=2.1;e.castFlash=0;sfx('roar');shake=6;
+  if(e.beamCd<=0&&!(e.tpWarn>0)&&Math.abs(p.y-e.y)<180){e.beamDur=2.1;e.beamT=2.1;e.castFlash=0;sfx('roar');shake=6;
     popups.push({x:e.x+e.w/2,y:e.y-24,text:'GET OUT OF THE LINE',life:1.6,color:'#e9b6ff',size:16});return;}
   e.castT=(e.castT||2)-dt;
   if(e.castT<=0){e.castT=e.shield?1.9:1.3;e.castFlash=0.8;const n=(e.phase||0)>=2?3:2;
@@ -753,7 +756,18 @@ function unstick(){const p=player;p.ghost=false;
   p.x=p.safe.x;p.y=p.safe.y;p.vx=0;p.vy=0;}
 function breakInvis(){const p=player;if(p.invisT>0){p.invisT=0;unstick();p.ambush=true;p.invisCd=Math.min(p.invisCd,10);}}
 function swingBox(e){const drg=e.fam==='dragon',big=e.w>80;return drg?{x:e.dir>0?e.x+e.w-10:e.x-116,y:e.y+20,w:126,h:90}:big?{x:e.dir>0?e.x+e.w-10:e.x-110,y:e.y+e.h*0.3,w:120,h:e.h*0.6}:{x:e.dir>0?e.x+e.w-8:e.x-72,y:e.y+12,w:80,h:56};}
-function drawTelegraph(e){if(!e.fam&&e.t!=='bug')return;const st=e.state;let box=null,soon=false,word='DODGE!',col='255,80,60';
+function drawTelegraph(e){
+  if(e.t==='mage'&&!e.mirror&&!e.fallen){if(e.stun>0)return;const cx=e.x+e.w/2-cam.x,cy=e.y+e.h/2-cam.y;
+    if(e.tpWarn>0){const soon=e.tpWarn<=0.3,k=1-e.tpWarn/0.8,c=soon?'255,70,50':'255,224,80';
+      ctx.fillStyle='rgba('+c+','+(0.10+0.14*k+(soon?0.10*Math.sin(time*40):0))+')';ctx.beginPath();ctx.arc(cx,cy,86,0,7);ctx.fill();
+      ctx.strokeStyle='rgba('+c+','+(0.4+0.5*k)+')';ctx.lineWidth=soon?3:2;ctx.setLineDash(soon?[]:[6,6]);ctx.beginPath();ctx.arc(cx,cy,86,0,7);ctx.stroke();ctx.setLineDash([]);
+      pxText(soon?'GET AWAY!':'!',cx,e.y-cam.y-40,soon?'#ff6a5a':'#ffe08a',soon?22:26);}
+    if(e.beamT>0&&e.beamT>e.beamDur*0.45){const soon=e.beamT-e.beamDur*0.45<0.3,by=e.y+e.h*0.42-cam.y,c=soon?'255,70,50':'255,224,80';
+      const x0=e.dir>0?cx:cx-1400;ctx.fillStyle='rgba('+c+','+(soon?0.22+0.1*Math.sin(time*40):0.14)+')';pxRect(x0,by-16,1400,32);
+      ctx.strokeStyle='rgba('+c+',0.8)';ctx.lineWidth=2;ctx.setLineDash(soon?[]:[6,6]);ctx.strokeRect(x0+1,by-15,1398,30);ctx.setLineDash([]);
+      pxText(soon?'GET OUT OF THE LINE!':'!',cx,e.y-cam.y-40,soon?'#ff6a5a':'#ffe08a',soon?22:26);}
+    return;}
+  if(!e.fam&&e.t!=='bug')return;const st=e.state;let box=null,soon=false,word='DODGE!',col='255,80,60';
   if(st==='lungewind'){box={x:e.dir>0?e.x+e.w:e.x-110,y:e.y,w:110,h:e.h};soon=e.st<=0.16;}
   else if(st==='windup'){box=swingBox(e);soon=e.st<=0.16;}
   else if(st==='swing'){box=swingBox(e);soon=true;}
@@ -876,7 +890,7 @@ function updateEnemies(dt){
       moveEntity(e,dt);
     }
     // contact damage
-    if(!e.noTouch&&!(e.t==='bug'&&e.state!=='lunge')&&!(e.t==='brute'&&!e.label)&&!p.dead&&p.inv<=0&&p.invisT<=0&&!p.slam&&p.dashT<=0&&e.stun<=0&&!NO_CONTACT.has(e.state)&&aabb(e,p)){if(evading())perfectDodge(e);else hurtPlayer(e,e.state==='roll'?(e.rollDmg||3):e.state==='lunge'?(e.dmgContact||1)+1:(e.dmgContact||1));}
+    if(!e.noTouch&&!((e.label||e.fam)&&e.state!=='roll'&&e.state!=='lunge')&&!(e.t==='bug'&&e.state!=='lunge')&&!(e.t==='brute'&&!e.label)&&!p.dead&&p.inv<=0&&p.invisT<=0&&!p.slam&&p.dashT<=0&&e.stun<=0&&!NO_CONTACT.has(e.state)&&aabb(e,p)){if(evading())perfectDodge(e);else hurtPlayer(e,e.state==='roll'?(e.rollDmg||3):e.state==='lunge'?(e.dmgContact||1)+1:(e.dmgContact||1));}
   }
 }
 
